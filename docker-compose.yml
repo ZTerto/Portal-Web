@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    container_name: postgres-db
+    restart: always
+    env_file: .env
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    container_name: backend
+    env_file:
+      - .env
+      - ./backend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  frontend:
+    image: node:20
+    container_name: frontend
+    working_dir: /app
+    env_file: .env
+    volumes:
+      - ./frontend:/app
+    command: ["npm", "run", "dev", "--", "--host", "--port", "5173"]
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

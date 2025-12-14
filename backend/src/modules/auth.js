@@ -6,46 +6,96 @@ import { signToken } from "../core/jwt.js";
 const router = express.Router();
 
 /* =========================
+   VALIDACIÓN REGISTER
+========================= */
+function validateRegisterInput({ name, dni, phone, email, password }) {
+  if (!name || !name.trim()) {
+    return "El nombre no puede estar vacío";
+  }
+
+  if (dni) {
+    const hasDigit = /\d/.test(dni);
+    const startsOrEndsWithLetter =
+      /^[A-Za-z]/.test(dni) || /[A-Za-z]$/.test(dni);
+
+    if (!hasDigit || !startsOrEndsWithLetter) {
+      return "DNI inválido";
+    }
+  }
+
+  if (phone) {
+    if (!/^\d{9}$/.test(phone)) {
+      return "El teléfono debe tener exactamente 9 dígitos";
+    }
+  }
+
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    return "Email inválido";
+  }
+
+  if (!password) {
+    return "La contraseña no puede estar vacía";
+  }
+
+  return null;
+}
+
+/* =========================
    REGISTER
 ========================= */
 router.post("/register", async (req, res) => {
   try {
     const { name, dni, phone, email, password } = req.body;
 
-    // 1️⃣ Validación básica
-    if (!name || !dni || !email || !password) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    // 1️⃣ Validación de formato
+    const validationError = validateRegisterInput(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
-    // 2️⃣ Comprobar duplicados
-    const existing = await pool.query(
-      "SELECT id FROM users WHERE email = $1 OR dni = $2",
-      [email, dni]
+    // 2️⃣ Nombre único (ÚNICA restricción)
+    const nameExists = await pool.query(
+      "SELECT id FROM users WHERE name = $1",
+      [name]
     );
 
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ error: "Usuario ya existente" });
+    if (nameExists.rows.length > 0) {
+      return res.status(409).json({
+        error: "Ese nombre ya está en uso",
+      });
     }
 
     // 3️⃣ Hash de contraseña
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Crear usuario
+    // 4️⃣ Crear usuario (email, dni y phone pueden repetirse)
     const userResult = await pool.query(
       `
       INSERT INTO users (name, dni, phone, email, password_hash)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, name, email
       `,
-      [name, dni, phone || null, email, passwordHash]
+      [
+        name.trim(),
+        dni || null,
+        phone || null,
+        email.trim(),
+        passwordHash,
+      ]
     );
 
     const user = userResult.rows[0];
 
-    // 5️⃣ Asignar rol USER
+    // 5️⃣ Asignar rol USER por defecto
     const roleResult = await pool.query(
       "SELECT id FROM roles WHERE name = 'USER'"
     );
+
+    if (roleResult.rows.length === 0) {
+      return res.status(500).json({
+        error: "Rol USER no configurado en el sistema",
+      });
+    }
 
     await pool.query(
       "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
@@ -55,12 +105,18 @@ router.post("/register", async (req, res) => {
     // 6️⃣ Crear JWT
     const token = signToken({
       id: user.id,
-      email: user.email,
       name: user.name,
     });
 
     // 7️⃣ Respuesta final
-    res.status(201).json({ token, user });
+    res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (err) {
     console.error("REGISTER ERROR:", err);
     res.status(500).json({ error: "Error interno" });
@@ -83,7 +139,6 @@ router.post("/login", async (req, res) => {
       [name]
     );
 
-
     if (result.rows.length === 0) {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
@@ -101,7 +156,6 @@ router.post("/login", async (req, res) => {
 
     const token = signToken({
       id: user.id,
-      email: user.email,
       name: user.name,
     });
 

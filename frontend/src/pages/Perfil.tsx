@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
+import { validateRegisterForm } from "../utils/validators";
+
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, user } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -17,6 +19,14 @@ export default function Perfil() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 🔁 Si ya estás autenticado, no deberías estar aquí
+  useEffect(() => {
+    if (user) {
+      navigate("/perfil/status");
+    }
+  }, [user, navigate]);
+
+  // 📝 Manejo del formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
@@ -26,6 +36,13 @@ export default function Perfil() {
 
   const handleSubmit = async () => {
     setError(null);
+
+    const validationError = validateRegisterForm(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,6 +54,8 @@ export default function Perfil() {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="flex items-center justify-center px-4 py-10">
@@ -135,7 +154,7 @@ export default function Perfil() {
 
         <p className="mt-6 text-base italic text-gray-700 leading-relaxed">
           Esta información es exclusivamente para gestionar la organización de
-          las jornadas. Si sigues teniendo dudas pero igualmente quieres 
+          las jornadas. Si sigues teniendo dudas pero igualmente quieres
           registrarte habla con Terto. ¿Dónde encuentro a Terto? Si has
           llegado aquí sabes de sobra cómo contactar con esa persona...
         </p>

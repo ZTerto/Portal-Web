@@ -7,10 +7,13 @@ import ProtectedAccess from "./utils/Protected";
 import Home from "./pages/Home";
 import Perfil from "./pages/Perfil";
 import PerfilLogin from "./pages/PerfilLogin";
+import PerfilStatus from "./pages/PerfilStatus";
+
 import Actividades from "./pages/Actividades";
 import Calendario from "./pages/Calendario";
 import Ludoteca from "./pages/Ludoteca";
 import Miembros from "./pages/Miembros";
+import Logros from "./pages/Logros";
 
 export default function App() {
   return (
@@ -22,6 +25,16 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/perfil/login" element={<PerfilLogin />} />
+
+            {/* Perfil autenticado */}
+            <Route
+              path="/perfil/status"
+              element={
+                <ProtectedAccess>
+                  <PerfilStatus />
+                </ProtectedAccess>
+              }
+            />
 
             {/* Protegidas */}
             <Route
@@ -56,6 +69,15 @@ export default function App() {
               element={
                 <ProtectedAccess>
                   <Miembros />
+                </ProtectedAccess>
+              }
+            />
+
+            <Route
+              path="/logros"
+              element={
+                <ProtectedAccess>
+                  <Logros />
                 </ProtectedAccess>
               }
             />

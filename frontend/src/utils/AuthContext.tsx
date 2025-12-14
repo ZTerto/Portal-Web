@@ -1,13 +1,22 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 /* =========================
    Tipos
 ========================= */
 
+export type Role = "USER" | "ORGANIZER" | "ADMIN";
+
 type User = {
   id: string;
   name: string;
-  email: string;
+  email?: string;
+  roles: Role[]; // 👈 IMPORTANTE: array de roles
 };
 
 type RegisterData = {
@@ -24,6 +33,8 @@ type AuthContextType = {
   login: (name: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  canAdmin: boolean;
+  canOrganize: boolean;
 };
 
 /* =========================
@@ -40,18 +51,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  /* 🔁 Recuperar sesión al recargar */
+  /* =========================
+     Recuperar sesión
+  ========================= */
+
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
+    if (!storedToken) return;
+
+    setToken(storedToken);
+
+    fetch("http://localhost:3000/me", {
+      headers: {
+        Authorization: `Bearer ${storedToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Sesión inválida");
+        return res.json();
+      })
+      .then((data) => {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      })
+      .catch(() => {
+        logout();
+      });
   }, []);
 
-  /* 🔐 LOGIN (name + password) */
+  /* =========================
+     LOGIN
+  ========================= */
+
   const login = async (name: string, password: string) => {
     const res = await fetch("http://localhost:3000/auth/login", {
       method: "POST",
@@ -66,13 +98,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
 
     setToken(data.token);
-    setUser(data.user);
-
     localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+
+    // 🔁 Cargar perfil completo (con roles)
+    const meRes = await fetch("http://localhost:3000/me", {
+      headers: {
+        Authorization: `Bearer ${data.token}`,
+      },
+    });
+
+    if (!meRes.ok) {
+      throw new Error("No se pudo recuperar el perfil");
+    }
+
+    const meData = await meRes.json();
+
+    setUser(meData.user);
+    localStorage.setItem("user", JSON.stringify(meData.user));
   };
 
-  /* 📝 REGISTER */
+  /* =========================
+     REGISTER
+  ========================= */
+
   const register = async (data: RegisterData) => {
     const res = await fetch("http://localhost:3000/auth/register", {
       method: "POST",
@@ -86,7 +134,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /* 🚪 LOGOUT */
+  /* =========================
+     LOGOUT
+  ========================= */
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -94,8 +145,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
   };
 
+  /* =========================
+     Permisos derivados
+  ========================= */
+
+  const roles = user?.roles ?? [];
+
+  const canAdmin = roles.includes("ADMIN");
+  const canOrganize =
+    roles.includes("ADMIN") || roles.includes("ORGANIZER");
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        register,
+        logout,
+        canAdmin,
+        canOrganize,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

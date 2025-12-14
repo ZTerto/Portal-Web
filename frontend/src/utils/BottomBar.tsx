@@ -20,55 +20,64 @@ export default function BottomBar() {
       {/* Menú desplegable */}
       {open && (
         <div className="fixed bottom-24 right-4 w-60 bg-gray-800 text-white rounded-lg shadow-xl z-50">
-          <nav className="flex flex-col divide-y divide-gray-700">
-            <Link
-              to="/"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Inicio
-            </Link>
+<nav className="flex flex-col divide-y divide-gray-700">
+  <Link
+    to="/"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Inicio
+  </Link>
 
-            <Link
-              to="/perfil"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Perfil
-            </Link>
+  <Link
+    to="/perfil"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Perfil
+  </Link>
 
-            <Link
-              to="/miembros"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Miembros
-            </Link>
+  <Link
+    to="/miembros"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Miembros
+  </Link>
 
-            <Link
-              to="/actividades"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Actividades
-            </Link>
+  <Link
+    to="/logros"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Logros
+  </Link>
 
-            <Link
-              to="/calendario"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Calendario
-            </Link>
+  <Link
+    to="/actividades"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Actividades
+  </Link>
 
-            <Link
-              to="/ludoteca"
-              className="px-4 py-3 hover:bg-gray-700"
-              onClick={() => setOpen(false)}
-            >
-              Ludoteca
-            </Link>
-          </nav>
+  <Link
+    to="/calendario"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Calendario
+  </Link>
+
+  <Link
+    to="/ludoteca"
+    className="px-4 py-3 hover:bg-gray-700"
+    onClick={() => setOpen(false)}
+  >
+    Ludoteca
+  </Link>
+</nav>
+
         </div>
       )}
 

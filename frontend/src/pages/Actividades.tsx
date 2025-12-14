@@ -295,6 +295,34 @@ export default function Actividades() {
     );
   };
 
+/* =========================
+   Quitar usuario de actividad (ADMIN / ORGANIZER)
+========================= */
+const removeParticipant = async (
+  activityId: number,
+  userId: string
+) => {
+  if (!token) return;
+
+  const res = await fetch(
+    `${import.meta.env.VITE_API_URL}/activities/${activityId}/participants/${userId}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  if (!res.ok) {
+    alert("Error retirando usuario");
+    return;
+  }
+
+  const updated = await res.json();
+
+  setActivities((prev) =>
+    prev.map((a) => (a.id === activityId ? updated : a))
+  );
+};
 
 
 /* =========================
@@ -329,7 +357,6 @@ return (
           </label>
 
           <div className="flex-1 space-y-2">
-            {/* 🔼 Tipo arriba */}
             <select
               className="w-full border rounded px-2 py-1"
               value={type}
@@ -342,7 +369,6 @@ return (
               ))}
             </select>
 
-            {/* 🔽 Título debajo */}
             <input
               className="w-full border rounded px-2 py-1"
               placeholder="Título"
@@ -441,35 +467,60 @@ return (
                 )}
               </div>
 
-              {/* AVATARES un poco más pequeños */}
+              {/* PARTICIPANTES */}
               {Array.isArray(a.participants_list) &&
                 a.participants_list.length > 0 && (
                   <div className="mt-4 space-y-3">
                     {a.participants_list.map((p) => (
-                      <div key={p.id} className="flex gap-3 items-center">
-                        <div
-                          title={p.name}
-                          className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm overflow-hidden"
-                        >
-                          {p.avatar_url ? (
-                            <img
-                              src={`${import.meta.env.VITE_API_URL}${p.avatar_url}`}
-                              className="w-full h-full object-cover"
-                              alt={p.name}
-                            />
-                          ) : (
-                            p.name?.charAt(0)?.toUpperCase() ?? "?"
-                          )}
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex gap-3 items-center">
+                          <div
+                            title={p.name}
+                            className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm overflow-hidden"
+                          >
+                            {p.avatar_url ? (
+                              <img
+                                src={`${import.meta.env.VITE_API_URL}${p.avatar_url}`}
+                                className="w-full h-full object-cover"
+                                alt={p.name}
+                              />
+                            ) : (
+                              p.name?.charAt(0)?.toUpperCase() ?? "?"
+                            )}
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium">
+                              {p.name ?? "Usuario"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDateTime(p.joined_at)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div>
-                          <p className="text-sm font-medium">
-                            {p.name ?? "Usuario"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDateTime(p.joined_at)}
-                          </p>
-                        </div>
+                        {(canAdmin || canOrganize) && (
+                          <button
+                            onClick={() => removeParticipant(a.id, p.id)}
+                            title="Quitar de la actividad"
+                              className="
+                              w-4 h-4
+                              flex items-center justify-center
+                              rounded-full
+                              bg-white
+                              text-red-600
+                              hover:bg-red-500
+                              hover:text-red-700
+                              transition-colors
+                            "
+                          >
+                            ×
+                          </button>
+                        )}
+
                       </div>
                     ))}
                   </div>
@@ -479,9 +530,7 @@ return (
             {/* INFO */}
             <div className="flex-1 flex flex-col">
               <p className="text-base text-indigo-600">{a.type}</p>
-
               <p className="font-semibold text-2xl">{a.title}</p>
-
               <p className="text-base text-gray-700">{a.description}</p>
 
               <div className="mt-auto pt-6 text-base text-gray-500 flex gap-4 flex-wrap">
@@ -499,7 +548,16 @@ return (
             {canAdmin && (
               <button
                 onClick={() => deleteActivity(a.id)}
-                className="text-red-600 text-3xl hover:text-white hover:bg-red-600 w-10 h-10 flex items-center justify-center rounded-full transition"
+                              className="
+                              w-6 h-6
+                              flex items-center justify-center
+                              rounded-full
+                              bg-white
+                              text-red-600
+                              hover:bg-red-500
+                              hover:text-red-700
+                              transition-colors
+                            "
               >
                 ×
               </button>
@@ -510,5 +568,4 @@ return (
     )}
   </div>
 );
-
 }

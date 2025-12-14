@@ -267,6 +267,35 @@ router.delete("/:id/join", requireAuth, async (req, res) => {
 });
 
 /* =========================
+   REMOVE USER FROM ACTIVITY (ADMIN / ORGANIZER)
+========================= */
+router.delete("/:id/participants/:userId", requireAuth, async (req, res) => {
+  try {
+    const activityId = Number(req.params.id);
+    const userIdToRemove = req.params.userId;
+
+    await pool.query(
+      `
+      DELETE FROM activity_participants
+      WHERE activity_id = $1 AND user_id = $2
+      `,
+      [activityId, userIdToRemove]
+    );
+
+    const updated = await fetchOneActivityForUser(
+      activityId,
+      req.user.id
+    );
+
+    res.json(updated);
+  } catch (err) {
+    console.error("REMOVE PARTICIPANT ERROR:", err);
+    res.status(500).json({ error: "Error retirando usuario" });
+  }
+});
+
+
+/* =========================
    REPLACE ACTIVITY IMAGE
 ========================= */
 router.patch(
@@ -319,5 +348,6 @@ router.delete("/:id", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Error borrando actividad" });
   }
 });
+
 
 export default router;

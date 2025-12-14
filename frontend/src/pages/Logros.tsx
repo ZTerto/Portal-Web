@@ -138,8 +138,9 @@ export default function Logros() {
                 title="Eliminar logro"
                 onClick={() => deleteAchievement(logro.id)}
                 className="
-                  absolute top-2 right-2
-                  text-red-600 text-lg font-bold
+                  absolute top-3 right-3
+                  bg-white rounded-full w-5 h-5
+                  text-red-600 text-lg font-bold center flex items-center justify-center
                   hover:text-red-800
                 "
               >

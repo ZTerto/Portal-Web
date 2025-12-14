@@ -186,7 +186,7 @@ export default function Miembros() {
                 </div>
 
                 {canAdmin && !isSelf && (
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2 text-xl">
                     {role === "USER" && (
                       <button
                         title="Subir a organizer"
@@ -212,9 +212,18 @@ export default function Miembros() {
                     <button
                       title="Eliminar usuario"
                       onClick={() => deleteUser(member.id)}
-                      className="text-red-600"
+                              className="
+                              w-6 h-6
+                              flex items-center justify-center
+                              rounded-full
+                              bg-white
+                              text-red-600
+                              hover:bg-red-500
+                              hover:text-red
+                              transition-colors
+                            "
                     >
-                      ❌
+                      x
                     </button>
                   </div>
                 )}

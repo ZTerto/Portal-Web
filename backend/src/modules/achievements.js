@@ -55,13 +55,23 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 
+    // 🔹 Generar ruta automática del avatar
+    const slug = name
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // quitar acentos
+      .replace(/\s+/g, "-"); // espacios → guiones
+
+    const avatarUrl = `/uploads/achievements/${slug}.png`;
+
     const result = await pool.query(
       `
       INSERT INTO achievements (name, description, avatar_url)
-      VALUES ($1, $2, NULL)
+      VALUES ($1, $2, $3)
       RETURNING id, name, description, avatar_url
       `,
-      [name.trim(), description.trim()]
+      [name.trim(), description.trim(), avatarUrl]
     );
 
     res.status(201).json(result.rows[0]);
@@ -70,6 +80,7 @@ router.post("/", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 });
+
 
 /* =========================
    DELETE /achievements/:id

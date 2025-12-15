@@ -181,8 +181,16 @@ export default function Miembros() {
             {/* IZQUIERDA */}
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-center gap-1">
-                <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
-                  {member.name.charAt(0).toUpperCase()}
+                <div className="w-16 h-16 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold overflow-hidden">
+                  {member.avatar_url ? (
+                    <img
+                      src={`${import.meta.env.VITE_API_URL}${member.avatar_url}`}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    member.name.charAt(0).toUpperCase()
+                  )}
                 </div>
 
                 {canAdmin && !isSelf && (
@@ -218,8 +226,8 @@ export default function Miembros() {
                               rounded-full
                               bg-white
                               text-red-600
-                              hover:bg-red-500
-                              hover:text-red
+                              hover:text-red-800
+                              hover:bg-red-100
                               transition-colors
                             "
                     >
@@ -253,7 +261,10 @@ export default function Miembros() {
                     className="relative w-9 h-9"
                   >
                     <img
-                      src={ach.avatar_url || ""}
+                      src={ach.avatar_url
+                        ? `${import.meta.env.VITE_API_URL}${ach.avatar_url}`
+                        : ""
+                      }
                       alt={ach.name}
                       className="w-full h-full rounded-full object-cover"
                     />

@@ -17,11 +17,16 @@ type ApiResponse = {
   };
 };
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+
 export default function PerfilStatus() {
   const { token } = useAuth();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetch(import.meta.env.VITE_API_URL + "/me", {
@@ -37,6 +42,48 @@ export default function PerfilStatus() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  const uploadAvatar = async (file: File) => {
+    if (!token) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    setUploading(true);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/me/avatar`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const json = await res.json();
+
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              user: {
+                ...prev.user,
+                avatar_url: json.avatar_url,
+              },
+            }
+          : prev
+      );
+    } catch {
+      alert("Error subiendo avatar");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -71,17 +118,35 @@ export default function PerfilStatus() {
       <div className="w-full max-w-xl bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 text-gray-900">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
+          {/* AVATAR CLICABLE */}
+          <label className="relative w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold overflow-hidden cursor-pointer group">
             {user.avatar_url ? (
               <img
-                src={user.avatar_url}
+                src={`${API_URL}${user.avatar_url}`}
                 alt="Avatar"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:opacity-80 transition"
               />
             ) : (
               <span>{avatarLetter}</span>
             )}
-          </div>
+
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadAvatar(file);
+                e.currentTarget.value = "";
+              }}
+            />
+
+            {uploading && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-sm">
+                Subiendo…
+              </div>
+            )}
+          </label>
 
           <div>
             <h1 className="text-2xl font-bold">

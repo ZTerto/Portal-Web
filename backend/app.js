@@ -4,6 +4,8 @@ import path from "path";
 
 import pool from "./src/core/db.js";
 
+import calendarRoutes from "./src/modules/calendar.js";
+import usersRoutes from "./src/modules/users.js";
 import authRoutes from "./src/modules/auth.js";
 import membersRoutes from "./src/modules/members.js";
 import achievementsRoutes from "./src/modules/achievements.js";
@@ -31,10 +33,13 @@ app.use("/uploads", express.static("uploads"));
    Rutas
 ========================= */
 
+app.use("/calendar", calendarRoutes);
 app.use("/auth", authRoutes);
 app.use("/members", membersRoutes);
 app.use("/achievements", achievementsRoutes);
 app.use("/activities", activitiesRoutes);
+app.use("/", usersRoutes);
+
 
 /* =========================
    Healthcheck
@@ -50,30 +55,15 @@ app.get("/ping", (req, res) => {
 
 app.get("/me", requireAuth, async (req, res) => {
   try {
-    const roleResult = await pool.query(
-      `
-      SELECT r.name
-      FROM user_roles ur
-      JOIN roles r ON r.id = ur.role_id
-      WHERE ur.user_id = $1
-      LIMIT 1
-      `,
-      [req.user.id]
-    );
-
-    const role = roleResult.rows[0]?.name || "USER";
-
     res.json({
       message: "Acceso autorizado",
-      user: {
-        ...req.user,
-        role,
-      },
+      user: req.user,
     });
   } catch (err) {
     console.error("ME ERROR:", err);
     res.status(500).json({ error: "Error interno" });
   }
 });
+
 
 export default app;

@@ -5,8 +5,18 @@ type Logro = {
   id: number;
   name: string;
   description: string;
-  avatar_url?: string | null;
 };
+
+function achievementImage(name: string) {
+  const file = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9_]/g, "")
+    .replace(/_+/g, "_");
+
+  return `${import.meta.env.VITE_API_URL}/uploads/achievements/${file}.png`;
+}
 
 export default function Logros() {
   const { token, canAdmin, canOrganize } = useAuth();
@@ -25,57 +35,51 @@ export default function Logros() {
     if (!token) return;
 
     fetch(import.meta.env.VITE_API_URL + "/achievements", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Error al cargar logros");
-        }
+        if (!res.ok) throw new Error();
         return res.json();
       })
-      .then((data) => {
-        setLogros(data);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("No se pudieron cargar los logros");
-      })
+      .then(setLogros)
+      .catch(() =>
+        setError("No se pudieron cargar los logros")
+      )
       .finally(() => setLoading(false));
   }, [token]);
 
-  /* =========================
-     Crear logro
-  ========================= */
-  const createAchievement = async () => {
-    if (!newName.trim() || !newDescription.trim()) return;
+/* =========================
+   Crear logro
+========================= */
+const createAchievement = async () => {
+  if (!newName.trim() || !newDescription.trim()) return;
 
-    const res = await fetch(
-      import.meta.env.VITE_API_URL + "/achievements",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: newName,
-          description: newDescription,
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      alert("No se pudo crear el logro");
-      return;
+  const res = await fetch(
+    import.meta.env.VITE_API_URL + "/achievements",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: newName.trim(),          // 👈 título libre
+        description: newDescription.trim(),
+      }),
     }
+  );
 
-    const created = await res.json();
-    setLogros((prev) => [...prev, created]);
-    setNewName("");
-    setNewDescription("");
-  };
+  if (!res.ok) {
+    alert("No se pudo crear el logro");
+    return;
+  }
+
+  const created = await res.json();
+  setLogros((prev) => [...prev, created]);
+  setNewName("");
+  setNewDescription("");
+};
+
 
   /* =========================
      Borrar logro (ADMIN)
@@ -87,9 +91,7 @@ export default function Logros() {
       import.meta.env.VITE_API_URL + `/achievements/${id}`,
       {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
 
@@ -98,8 +100,21 @@ export default function Logros() {
       return;
     }
 
+
+    // Actualizar lista
     setLogros((prev) => prev.filter((l) => l.id !== id));
   };
+
+  function achievementImage(name: string) {
+  const slug = name
+    .toLowerCase()
+    .normalize("NFD")                 // quita acentos
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
+  return `${import.meta.env.VITE_API_URL}/uploads/achievements/${slug}.png`;
+}
+
 
   /* =========================
      Render
@@ -139,9 +154,11 @@ export default function Logros() {
                 onClick={() => deleteAchievement(logro.id)}
                 className="
                   absolute top-3 right-3
-                  bg-white rounded-full w-5 h-5
-                  text-red-600 text-lg font-bold center flex items-center justify-center
-                  hover:text-red-800
+                  w-5 h-5 rounded-full
+                  bg-white text-red-600
+                  text-lg font-bold
+                  flex items-center justify-center
+                  hover:bg-red-100 hover:text-red-800
                 "
               >
                 ×
@@ -149,23 +166,31 @@ export default function Logros() {
             )}
 
             {/* Avatar */}
-            <div className="w-14 h-14 flex-shrink-0 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center">
-                {logro.avatar_url ? (
-                    <img
-                        src={logro.avatar_url}
-                        alt={logro.name}
-                        className="w-full h-full object-contain"
-                    />
-                    ) : (
-                    <span className="text-white font-bold">
-                        {logro.name.charAt(0).toUpperCase()}
-                    </span>
-                     )}
-            </div>
+            <div className="w-14 h-14 flex-shrink-0 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center relative">
+  <img
+    src={achievementImage(logro.name)}
+    alt={logro.name}
+    className="w-full h-full object-contain"
+    onError={(e) => {
+      e.currentTarget.style.display = "none";
+    }}
+  />
+  <span className="absolute text-white font-bold pointer-events-none opacity-0">
+    {logro.name.charAt(0).toUpperCase()}
+  </span>
+</div>
+
 
             {/* Texto */}
             <div>
-              <p className="font-semibold">{logro.name}</p>
+              <p className="font-semibold">
+                {logro.name}
+                {canAdmin && (
+                  <span className="ml-2 text-xs text-gray-400">
+                    #{logro.id}
+                  </span>
+                )}
+              </p>
               <p className="text-sm text-gray-600">
                 {logro.description}
               </p>
@@ -177,11 +202,13 @@ export default function Logros() {
       {/* CREAR LOGRO */}
       {(canAdmin || canOrganize) && (
         <div className="mt-8 p-4 bg-white/90 rounded-xl shadow text-gray-900">
-          <h2 className="font-semibold mb-2">Crear nuevo logro (El título debe ser una sola palabra)</h2>
+          <h2 className="font-semibold mb-2">
+            Crear nuevo logro (una sola palabra, usa _)
+          </h2>
 
           <input
             type="text"
-            placeholder="Título del logro"
+            placeholder="ej: Pokemon_drinking_game"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="w-full mb-2 p-2 border rounded"

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
+
 
 type Participant = {
   id: string;
@@ -57,10 +59,12 @@ const formatDateTime = (iso?: string) => {
 };
 
 export default function Actividades() {
-  const { token, canAdmin, canOrganize } = useAuth();
-
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const { token, canAdmin, canOrganize } = useAuth();
+  const { id } = useParams<{ id?: string }>();
+  const isDetailView = Boolean(id);
+  const navigate = useNavigate();
 
   /* =========================
      FORM STATE
@@ -73,25 +77,35 @@ export default function Actividades() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  /* =========================
-     Cargar actividades
-  ========================= */
-  useEffect(() => {
-    if (!token) return;
 
-    fetch(`${import.meta.env.VITE_API_URL}/activities`, {
-      headers: { Authorization: `Bearer ${token}` },
+
+/* =========================
+   Cargar actividades
+========================= */
+useEffect(() => {
+  if (!token) return;
+
+  const url = id
+    ? `${import.meta.env.VITE_API_URL}/activities/${id}`
+    : `${import.meta.env.VITE_API_URL}/activities`;
+
+  fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
     })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
-      .then((data) => setActivities(data))
-      .catch((err) =>
-        console.error("Error cargando actividades:", err)
-      )
-      .finally(() => setLoading(false));
-  }, [token]);
+    .then((data) => {
+      setActivities(id ? [data] : data);
+    })
+    .catch((err) =>
+      console.error("Error cargando actividades:", err)
+    )
+    .finally(() => setLoading(false));
+}, [token, id]);
+
+
 
   /* =========================
      Subir imagen (crear actividad)
@@ -324,7 +338,6 @@ const removeParticipant = async (
   );
 };
 
-
 /* =========================
    Render
 ========================= */
@@ -332,7 +345,7 @@ return (
   <div className="p-4 max-w-5xl mx-auto space-y-8">
     <h1 className="text-2xl font-bold">Actividades</h1>
 
-    {(canAdmin || canOrganize) && (
+    {!isDetailView && (canAdmin || canOrganize) && (
       <div className="bg-white rounded-xl p-4 text-gray-900 shadow space-y-4">
         <div className="flex gap-4">
           <label className="w-40 h-56 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden">
@@ -371,13 +384,13 @@ return (
 
             <input
               className="w-full border rounded px-2 py-1"
-              placeholder="Título"
+              placeholder="Título de la actividad"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
 
             <textarea
-              className="w-full border rounded px-2 py-1 h-64"
+              className="w-full border rounded px-2 py-1 h-128 resize-y"
               placeholder="Descripción"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -386,13 +399,13 @@ return (
             <div className="flex gap-2">
               <input
                 className="w-1/2 border rounded px-2 py-1"
-                placeholder="Número participantes"
+                placeholder="👥 Participantes"
                 value={participants}
                 onChange={(e) => setParticipants(e.target.value)}
               />
               <input
                 className="w-1/2 border rounded px-2 py-1"
-                placeholder="Horas aproximadas"
+                placeholder="⏱️ Horas aprox."
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
               />
@@ -415,155 +428,182 @@ return (
       <p className="text-center text-blue-200">Cargando…</p>
     ) : (
       <div className="space-y-4">
-        {activities.map((a) => (
-          <div
-            key={a.id}
-            className="flex gap-4 bg-white/90 text-gray-900 rounded-xl p-4 shadow"
-          >
-            {/* IMAGEN + BOTÓN */}
-            <div className="w-32">
-              {a.image_url && (
-                <label
-                  className={`block w-32 h-48 rounded-lg overflow-hidden ${
-                    canAdmin || canOrganize ? "cursor-pointer group" : ""
-                  }`}
-                >
-                  <img
-                    src={`${import.meta.env.VITE_API_URL}${a.image_url}`}
-                    className="w-full h-full object-cover group-hover:opacity-80 transition"
-                  />
-
-                  {(canAdmin || canOrganize) && (
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file)
-                          replaceActivityImage(a.id, file);
-                        e.currentTarget.value = "";
-                      }}
+        {activities.map((a) => {
+          return (
+            <div
+              key={a.id}
+              className="
+                bg-white
+                rounded-xl
+                p-4
+                text-gray-900
+                shadow
+                flex
+                gap-6
+                items-start
+              "
+            >
+              {/* IMAGEN + ACCIONES */}
+              <div className="w-32">
+                {a.image_url && (
+                  <label
+                    className={`block w-32 h-48 rounded-lg overflow-hidden ${
+                      canAdmin || canOrganize
+                        ? "cursor-pointer group"
+                        : ""
+                    }`}
+                  >
+                    <img
+                      src={`${import.meta.env.VITE_API_URL}${a.image_url}`}
+                      className="w-full h-full object-cover group-hover:opacity-80 transition"
                     />
+
+                    {(canAdmin || canOrganize) && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file)
+                            replaceActivityImage(a.id, file);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                    )}
+                  </label>
+                )}
+
+                {/* APUNTARSE / SALIR */}
+                <div className="mt-2">
+                  {a.is_joined ? (
+                    <button
+                      onClick={() => leaveActivity(a.id)}
+                      className="w-full text-sm py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
+                    >
+                      Salir
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => joinActivity(a.id)}
+                      className="w-full text-sm py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                      Apuntarse
+                    </button>
                   )}
-                </label>
-              )}
+                </div>
 
-              <div className="mt-2">
-                {a.is_joined ? (
-                  <button
-                    onClick={() => leaveActivity(a.id)}
-                    className="w-full text-sm py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
-                  >
-                    Salir
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => joinActivity(a.id)}
-                    className="w-full text-sm py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                  >
-                    Apuntarse
-                  </button>
-                )}
-              </div>
+                {/* PARTICIPANTES */}
+                {Array.isArray(a.participants_list) &&
+                  a.participants_list.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {a.participants_list.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex gap-3 items-center">
+                            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm overflow-hidden">
+                              {p.avatar_url ? (
+                                <img
+                                  src={`${import.meta.env.VITE_API_URL}${p.avatar_url}`}
+                                  className="w-full h-full object-cover"
+                                  alt={p.name}
+                                />
+                              ) : (
+                                p.name
+                                  ?.charAt(0)
+                                  ?.toUpperCase() ?? "?"
+                              )}
+                            </div>
 
-              {/* PARTICIPANTES */}
-              {Array.isArray(a.participants_list) &&
-                a.participants_list.length > 0 && (
-                  <div className="mt-4 space-y-3">
-                    {a.participants_list.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex gap-3 items-center">
-                          <div
-                            title={p.name}
-                            className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm overflow-hidden"
-                          >
-                            {p.avatar_url ? (
-                              <img
-                                src={`${import.meta.env.VITE_API_URL}${p.avatar_url}`}
-                                className="w-full h-full object-cover"
-                                alt={p.name}
-                              />
-                            ) : (
-                              p.name?.charAt(0)?.toUpperCase() ?? "?"
-                            )}
+                            <div>
+                              <p className="text-sm font-medium">
+                                {p.name ?? "Usuario"}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatDateTime(p.joined_at)}
+                              </p>
+                            </div>
                           </div>
 
-                          <div>
-                            <p className="text-sm font-medium">
-                              {p.name ?? "Usuario"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatDateTime(p.joined_at)}
-                            </p>
-                          </div>
+                          {(canAdmin || canOrganize) && (
+                            <button
+                              onClick={() =>
+                                removeParticipant(a.id, p.id)
+                              }
+                              title="Quitar de la actividad"
+                              className="
+                                w-6 h-6
+                                flex items-center justify-center
+                                rounded-full
+                                bg-white
+                                text-red-600
+                                hover:text-red-800
+                                hover:bg-red-100
+                                transition-colors
+                              "
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
-
-                        {(canAdmin || canOrganize) && (
-                          <button
-                            onClick={() => removeParticipant(a.id, p.id)}
-                            title="Quitar de la actividad"
-                              className="
-                              w-4 h-4
-                              flex items-center justify-center
-                              rounded-full
-                              bg-white
-                              text-red-600
-                              hover:bg-red-500
-                              hover:text-red-700
-                              transition-colors
-                            "
-                          >
-                            ×
-                          </button>
-                        )}
-
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-
-            {/* INFO */}
-            <div className="flex-1 flex flex-col">
-              <p className="text-base text-indigo-600">{a.type}</p>
-              <p className="font-semibold text-2xl">{a.title}</p>
-              <p className="text-base text-gray-700">{a.description}</p>
-
-              <div className="mt-auto pt-6 text-base text-gray-500 flex gap-4 flex-wrap">
-                {a.participants && <span>👥 {a.participants}</span>}
-                {a.duration && <span>⏱ {a.duration}h</span>}
-                {(a.creator_name || a.created_at) && (
-                  <span>
-                    👤 {a.creator_name || "—"} ·{" "}
-                    {formatDate(a.created_at)}
-                  </span>
-                )}
+                      ))}
+                    </div>
+                  )}
               </div>
-            </div>
 
-            {canAdmin && (
-              <button
-                onClick={() => deleteActivity(a.id)}
-                              className="
-                              w-6 h-6
-                              flex items-center justify-center
-                              rounded-full
-                              bg-white
-                              text-red-600
-                              hover:bg-red-500
-                              hover:text-red-700
-                              transition-colors
-                            "
-              >
-                ×
-              </button>
-            )}
-          </div>
-        ))}
+              {/* INFO */}
+              <div className="flex-1 flex flex-col">
+                <p className="text-base text-indigo-600">
+                  {a.type}
+                </p>
+                <p
+                  className="font-bold text-2xl text-black" >
+                  {a.title}
+                </p>
+                <p className="text-sm text-gray-700 whitespace-pre-line">
+                  {a.description}
+                </p>
+
+                <div className="mt-auto pt-6 text-base text-gray-500 flex gap-4 flex-wrap">
+                  {a.participants && (
+                    <span>👥 {a.participants}</span>
+                  )}
+                  {a.duration && (
+                    <span>⏱ {a.duration}h</span>
+                  )}
+                  {(a.creator_name || a.created_at) && (
+                    <span>
+                      👤 {a.creator_name || "—"} ·{" "}
+                      {formatDate(a.created_at)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* ELIMINAR ACTIVIDAD */}
+              {canAdmin && (
+                <button
+                  onClick={() => deleteActivity(a.id)}
+                  title="Eliminar actividad"
+                  className="
+                    w-8 h-8
+                    flex items-center justify-center
+                    rounded-full
+                    bg-red-600
+                    text-white
+                    text-xl
+                    hover:bg-red-700
+                    transition-colors
+                  "
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     )}
   </div>

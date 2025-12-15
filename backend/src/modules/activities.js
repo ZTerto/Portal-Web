@@ -162,6 +162,34 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 /* =========================
+   GET ACTIVITY BY ID (DETAIL)
+========================= */
+router.get("/:id", requireAuth, async (req, res) => {
+  try {
+    const activityId = Number(req.params.id);
+
+    if (!activityId) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    const activity = await fetchOneActivityForUser(
+      activityId,
+      req.user.id
+    );
+
+    if (!activity) {
+      return res.status(404).json({ error: "Actividad no encontrada" });
+    }
+
+    res.json(activity);
+  } catch (err) {
+    console.error("GET ACTIVITY ERROR:", err);
+    res.status(500).json({ error: "Error cargando actividad" });
+  }
+});
+
+
+/* =========================
    UPLOAD IMAGE (CREAR)
 ========================= */
 router.post(

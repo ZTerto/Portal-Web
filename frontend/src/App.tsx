@@ -47,6 +47,16 @@ export default function App() {
             />
 
             <Route
+              path="/actividades/:id"
+              element={
+                <ProtectedAccess>
+                  <Actividades />
+                </ProtectedAccess>
+              }
+            />
+
+
+            <Route
               path="/calendario"
               element={
                 <ProtectedAccess>

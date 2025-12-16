@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 import { validateRegisterForm } from "../utils/validators";
 
-
+//20251215
+// Componente principal de la página de perfil (registro)
 export default function Perfil() {
   const navigate = useNavigate();
   const { register, user } = useAuth();
@@ -19,14 +20,12 @@ export default function Perfil() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔁 Si ya estás autenticado, no deberías estar aquí
   useEffect(() => {
     if (user) {
       navigate("/perfil/status");
     }
   }, [user, navigate]);
 
-  // 📝 Manejo del formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
@@ -56,7 +55,9 @@ export default function Perfil() {
   };
 
 
-
+/* =========================
+   Render
+========================= */
   return (
     <div className="flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 text-gray-800">

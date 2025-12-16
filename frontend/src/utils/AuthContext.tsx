@@ -16,7 +16,8 @@ type User = {
   id: string;
   name: string;
   email?: string;
-  roles: Role[]; // 👈 IMPORTANTE: array de roles
+  avatar_url?: string | null;
+  roles: Role[];
 };
 
 type RegisterData = {

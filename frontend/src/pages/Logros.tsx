@@ -1,23 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
+//20251215
+// Definición del tipo de datos de un logro
 type Logro = {
   id: number;
   name: string;
   description: string;
 };
 
-function achievementImage(name: string) {
-  const file = name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9_]/g, "")
-    .replace(/_+/g, "_");
-
-  return `${import.meta.env.VITE_API_URL}/uploads/achievements/${file}.png`;
-}
-
+//20251215
+// Componente principal de la página de logros
 export default function Logros() {
   const { token, canAdmin, canOrganize } = useAuth();
 
@@ -28,9 +21,8 @@ export default function Logros() {
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  /* =========================
-     Cargar logros
-  ========================= */
+//20251215
+// Cargar logros
   useEffect(() => {
     if (!token) return;
 
@@ -48,9 +40,9 @@ export default function Logros() {
       .finally(() => setLoading(false));
   }, [token]);
 
-/* =========================
-   Crear logro
-========================= */
+//20251215
+// Crear logro
+// ADMIN/ORGANIZER ONLY
 const createAchievement = async () => {
   if (!newName.trim() || !newDescription.trim()) return;
 
@@ -63,7 +55,7 @@ const createAchievement = async () => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        name: newName.trim(),          // 👈 título libre
+        name: newName.trim(),
         description: newDescription.trim(),
       }),
     }
@@ -80,10 +72,9 @@ const createAchievement = async () => {
   setNewDescription("");
 };
 
-
-  /* =========================
-     Borrar logro (ADMIN)
-  ========================= */
+//20251215
+// Borrar logro 
+// ADMIN ONLY
   const deleteAchievement = async (id: number) => {
     if (!confirm("¿Eliminar este logro?")) return;
 
@@ -99,12 +90,11 @@ const createAchievement = async () => {
       alert("No se pudo borrar el logro");
       return;
     }
-
-
-    // Actualizar lista
     setLogros((prev) => prev.filter((l) => l.id !== id));
   };
 
+//20251215
+// Función para obtener la URL de la imagen del logro
   function achievementImage(name: string) {
   const slug = name
     .toLowerCase()
@@ -116,10 +106,9 @@ const createAchievement = async () => {
 }
 
 
-  /* =========================
-     Render
-  ========================= */
-
+/* =========================
+   Render
+========================= */
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-blue-200">
@@ -203,7 +192,7 @@ const createAchievement = async () => {
       {(canAdmin || canOrganize) && (
         <div className="mt-8 p-4 bg-white/90 rounded-xl shadow text-gray-900">
           <h2 className="font-semibold mb-2">
-            Crear nuevo logro (una sola palabra, usa _)
+            Crear nuevo logro (La imagen es generada posteriormente por Terto)
           </h2>
 
           <input

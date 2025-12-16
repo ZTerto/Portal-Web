@@ -2,10 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
-/* =========================
-   Configuración base
-========================= */
-
+// Días de la semana (2 columnas por día)
 const DAYS = [
   "Domingo",
   "Lunes",
@@ -22,16 +19,14 @@ const HOURS = [
   0, 1, 2, 3, 4,
 ];
 
-/* =========================
-   Tipos
-========================= */
-
+// Definición de tipos
 type Activity = {
   id: number;
   title: string;
   image_url?: string;
 };
 
+// Definición del tipo de datos de un evento del calendario
 type CalendarEvent = {
   id: number;
   day: number;
@@ -41,10 +36,7 @@ type CalendarEvent = {
   activity: Activity;
 };
 
-/* =========================
-   Componente
-========================= */
-
+// Componente principal de la página de calendario
 export default function Calendario() {
   const { canAdmin, canOrganize, token } = useAuth();
   const navigate = useNavigate();
@@ -64,17 +56,16 @@ export default function Calendario() {
     useState<CalendarEvent[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
 
-  /* =========================
-     Altura dinámica
-  ========================= */
-
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [rowHeight, setRowHeight] = useState(48);
 
+  //20251215
+  // Calcular altura de filas según espacio disponible
   useEffect(() => {
     const calculate = () => {
+      const BORDER_Y = 3;
       if (!gridRef.current) return;
-      const available = gridRef.current.clientHeight;
+      const available = gridRef.current.clientHeight - BORDER_Y * HOURS.length;
       const calculated = Math.floor(available / HOURS.length);
       setRowHeight(Math.max(calculated, 32));
     };
@@ -84,10 +75,8 @@ export default function Calendario() {
     return () => window.removeEventListener("resize", calculate);
   }, []);
 
-  /* =========================
-     Cargar calendario
-  ========================= */
-
+//20251215
+// Función para cargar los eventos del calendario
   const loadCalendar = async () => {
     if (!token) return;
 
@@ -103,10 +92,8 @@ export default function Calendario() {
     loadCalendar().catch(console.error);
   }, [token]);
 
-  /* =========================
-     Cargar actividades
-  ========================= */
-
+//20251215
+// Obtener actividades
   useEffect(() => {
     if (!token) return;
 
@@ -118,10 +105,8 @@ export default function Calendario() {
       .catch(console.error);
   }, [token]);
 
-  /* =========================
-     Helpers
-  ========================= */
-
+//20251215
+// Reset selección
   function resetSelection() {
     setIsSelecting(false);
     setSelectedCol(null);
@@ -130,10 +115,10 @@ export default function Calendario() {
     setSelectedActivityId(null);
   }
 
-  /* =========================
-     Render
-  ========================= */
 
+/* =========================
+   Render
+========================= */
   return (
     <div className="p-6 overflow-x-auto select-none relative h-full flex flex-col">
       <div className="w-full overflow-hidden relative flex flex-col flex-1">
@@ -209,13 +194,13 @@ export default function Calendario() {
                         }
                       }}
                       className={[
-                        "border border-gray-800 transition cursor-pointer",
+                        "border border-gray-800 box-border transition cursor-pointer",
                         isHovered && "bg-gray-800/30",
                         isSelected && "bg-indigo-500/30",
                       ]
                         .filter(Boolean)
                         .join(" ")}
-                      style={{ height: rowHeight }}
+                      style={{ height: rowHeight}}
                     />
                   );
                 })}
@@ -291,7 +276,7 @@ export default function Calendario() {
                   </button>
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/20 to-black/10" />
                 <div className="relative z-10 p-1 font-semibold truncate">
                   {ev.activity.title}
                 </div>

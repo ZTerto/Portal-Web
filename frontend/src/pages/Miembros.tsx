@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
+//20251215
+// Definición de los tipos de datos
 type Role = "USER" | "ORGANIZER" | "ADMIN";
 
+//20251215
+// Definición del tipo de datos de un logro
 type Achievement = {
   id: number;
   name: string;
   avatar_url?: string | null;
 };
 
+//20251215
+// Definición del tipo de datos de un miembro
 type Member = {
   id: string;
   name: string;
@@ -18,6 +24,20 @@ type Member = {
   achievements: Achievement[];
 };
 
+//20251215
+// Función para obtener la URL de la imagen del logro
+function achievementImage(name: string) {
+  const slug = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
+  return `${import.meta.env.VITE_API_URL}/uploads/achievements/${slug}.png`;
+}
+
+//20251215
+// Componente principal de la página de miembros
 export default function Miembros() {
   const { token, user, canAdmin, canOrganize } = useAuth();
 
@@ -26,9 +46,8 @@ export default function Miembros() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* =========================
-     Cargar datos
-  ========================= */
+  //20251215
+  // Cargar miembros y logros
   useEffect(() => {
     if (!token) return;
 
@@ -49,10 +68,9 @@ export default function Miembros() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  /* =========================
-     Acciones
-  ========================= */
-
+  
+  //20251215
+  // Cambiar rol de usuario
   const changeRole = async (userId: string, role: Role) => {
     await fetch(
       `${import.meta.env.VITE_API_URL}/members/${userId}/role`,
@@ -73,6 +91,8 @@ export default function Miembros() {
     );
   };
 
+  //20251215
+  // Eliminar usuario
   const deleteUser = async (userId: string) => {
     const confirmDelete = confirm(
       "¿Seguro que quieres eliminar este usuario?"
@@ -97,6 +117,8 @@ export default function Miembros() {
     );
   };
 
+  //20251215
+  // Añadir logro a usuario
   const addAchievement = async (
     userId: string,
     achievementId: number
@@ -130,6 +152,8 @@ export default function Miembros() {
     );
   };
 
+  //20251215
+  // Quitar logro a usuario
   const removeAchievement = async (
     userId: string,
     achievementId: number
@@ -165,6 +189,10 @@ export default function Miembros() {
       </div>
     );
 
+
+/* =========================
+   Render
+========================= */
   return (
     <div className="p-4 max-w-4xl mx-auto space-y-4">
       <h1 className="text-2xl font-bold mb-4">Miembros</h1>
@@ -261,12 +289,12 @@ export default function Miembros() {
                     className="relative w-9 h-9"
                   >
                     <img
-                      src={ach.avatar_url
-                        ? `${import.meta.env.VITE_API_URL}${ach.avatar_url}`
-                        : ""
-                      }
+                      src={achievementImage(ach.name)}
                       alt={ach.name}
                       className="w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
                     />
 
                     {(canAdmin || canOrganize) && (

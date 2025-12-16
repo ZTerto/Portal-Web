@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
+//20251215
+// Definición del tipo de datos esperado de la API
 type ApiResponse = {
   message?: string;
   user?: {
@@ -17,10 +19,13 @@ type ApiResponse = {
   };
 };
 
+//20251215
+// URL base de la API
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-
+//20251215
+// Componente principal de la página de perfil
 export default function PerfilStatus() {
   const { token } = useAuth();
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -28,6 +33,8 @@ export default function PerfilStatus() {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  //20251215
+  // Efecto para cargar los datos del perfil al montar el componente
   useEffect(() => {
     fetch(import.meta.env.VITE_API_URL + "/me", {
       headers: {
@@ -43,6 +50,8 @@ export default function PerfilStatus() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  //20251215
+  // Función para subir el avatar
   const uploadAvatar = async (file: File) => {
     if (!token) return;
 
@@ -113,6 +122,10 @@ export default function PerfilStatus() {
 
   const avatarLetter = user.name?.charAt(0)?.toUpperCase() || "?";
 
+
+/* =========================
+   Render
+========================= */
   return (
     <div className="flex justify-center px-4 py-10">
       <div className="w-full max-w-xl bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 text-gray-900">

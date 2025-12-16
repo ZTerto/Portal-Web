@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
+
+//20251215
+// Pantalla de entrar con el usuario
 export default function PerfilLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -26,6 +29,10 @@ export default function PerfilLogin() {
     }
   };
 
+  
+/* =========================
+   Render
+========================= */
   return (
     <div className="flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 text-gray-800">

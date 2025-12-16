@@ -1,20 +1,25 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./utils/AuthContext";
 
+//20251215
+// Barra de abajo y protección de acceso
 import BottomBar from "./utils/BottomBar";
 import ProtectedAccess from "./utils/Protected";
 
+//20251215
+// Direcciones de pages
 import Home from "./pages/Home";
 import Perfil from "./pages/Perfil";
 import PerfilLogin from "./pages/PerfilLogin";
 import PerfilStatus from "./pages/PerfilStatus";
-
 import Actividades from "./pages/Actividades";
 import Calendario from "./pages/Calendario";
 import Ludoteca from "./pages/Ludoteca";
 import Miembros from "./pages/Miembros";
 import Logros from "./pages/Logros";
 
+//20251215
+// Muestra de la App
 export default function App() {
   return (
     <AuthProvider>

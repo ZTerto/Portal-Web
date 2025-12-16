@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
-
+//20251215
+// Definición del tipo de datos de una actividad
 type Participant = {
   id: string;
   name: string;
@@ -10,6 +11,8 @@ type Participant = {
   joined_at: string;
 };
 
+//20251215
+// Definición del tipo de datos de una actividad
 type Activity = {
   id: number;
   title: string;
@@ -24,6 +27,8 @@ type Activity = {
   is_joined?: boolean;
 };
 
+//20251215
+// Tipos de actividades
 const TYPES = [
   "Rol de mesa",
   "Rol en vivo",
@@ -35,6 +40,8 @@ const TYPES = [
   "Otros",
 ];
 
+//20251215
+// Formatear fecha
 const formatDate = (iso?: string) => {
   if (!iso) return null;
 
@@ -46,7 +53,9 @@ const formatDate = (iso?: string) => {
   });
 };
 
-const formatDateTime = (iso?: string) => {
+//20251215
+// Formatear fecha y hora
+const formatDateTime = (iso? : string) => {
   if (!iso) return "";
   const d = new Date(iso);
   return d.toLocaleString("es-ES", {
@@ -58,6 +67,8 @@ const formatDateTime = (iso?: string) => {
   });
 };
 
+//20251215
+// Componente principal de la página de actividades
 export default function Actividades() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,9 +77,6 @@ export default function Actividades() {
   const isDetailView = Boolean(id);
   const navigate = useNavigate();
 
-  /* =========================
-     FORM STATE
-  ========================= */
   const [title, setTitle] = useState("");
   const [type, setType] = useState(TYPES[0]);
   const [description, setDescription] = useState("");
@@ -78,10 +86,9 @@ export default function Actividades() {
   const [uploading, setUploading] = useState(false);
 
 
-
-/* =========================
-   Cargar actividades
-========================= */
+//20251215
+// Cargar actividades
+// ADMIN/ORGANIZER ONLY
 useEffect(() => {
   if (!token) return;
 
@@ -106,10 +113,9 @@ useEffect(() => {
 }, [token, id]);
 
 
-
-  /* =========================
-     Subir imagen (crear actividad)
-  ========================= */
+//20251215
+// Subir imagen de actividad
+// ADMIN/ORGANIZER ONLY
   const uploadImage = async (file: File) => {
     if (!token) return;
 
@@ -141,9 +147,9 @@ useEffect(() => {
     }
   };
 
-  /* =========================
-     Crear actividad
-  ========================= */
+//20251215
+// Crear actividad
+// ADMIN/ORGANIZER ONLY
   const createActivity = async () => {
     if (!title || !description || !token) return;
 
@@ -181,9 +187,9 @@ useEffect(() => {
     setImageUrl(null);
   };
 
-  /* =========================
-     Borrar actividad
-  ========================= */
+//20251215
+// Borrar actividad
+// ADMIN ONLY
   const deleteActivity = async (id: number) => {
     if (!token) return;
 
@@ -205,9 +211,8 @@ useEffect(() => {
     setActivities((prev) => prev.filter((a) => a.id !== id));
   };
 
-  /* =========================
-     Reemplazar imagen de actividad
-  ========================= */
+//20251215
+// Reemplazar imagen de actividad
   const replaceActivityImage = async (id: number, file: File) => {
     if (!token) return;
 
@@ -237,9 +242,8 @@ useEffect(() => {
     );
   };
 
-  /* =========================
-     Apuntarse a actividad
-  ========================= */
+//20251215
+// Apuntarse a actividad
   const joinActivity = async (id: number) => {
     if (!token) return;
 
@@ -273,9 +277,8 @@ useEffect(() => {
     );
   };
 
-  /* =========================
-     Salir de actividad
-  ========================= */
+//20251215
+// Salir de actividad
   const leaveActivity = async (id: number) => {
     if (!token) return;
 
@@ -309,9 +312,9 @@ useEffect(() => {
     );
   };
 
-/* =========================
-   Quitar usuario de actividad (ADMIN / ORGANIZER)
-========================= */
+//20251215
+// Remove participant from activity
+// ADMIN/ORGANIZER ONLY
 const removeParticipant = async (
   activityId: number,
   userId: string
@@ -337,6 +340,7 @@ const removeParticipant = async (
     prev.map((a) => (a.id === activityId ? updated : a))
   );
 };
+
 
 /* =========================
    Render

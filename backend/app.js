@@ -10,6 +10,7 @@ import authRoutes from "./src/modules/auth.js";
 import membersRoutes from "./src/modules/members.js";
 import achievementsRoutes from "./src/modules/achievements.js";
 import activitiesRoutes from "./src/modules/activities.js";
+import ludotecaRouter from "./src/modules/ludoteca.js";
 
 import { requireAuth } from "./src/core/middlewares.js";
 
@@ -38,6 +39,7 @@ app.use("/auth", authRoutes);
 app.use("/members", membersRoutes);
 app.use("/achievements", achievementsRoutes);
 app.use("/activities", activitiesRoutes);
+app.use("/ludoteca", ludotecaRouter);
 app.use("/", usersRoutes);
 
 

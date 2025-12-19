@@ -1,8 +1,9 @@
+import PerfilStatus_Render from "./PerfilStatus_Render";
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
-//20251215
-// Definición del tipo de datos esperado de la API
+/* ===== Tipos ===== */
+
 type ApiResponse = {
   message?: string;
   user?: {
@@ -13,30 +14,39 @@ type ApiResponse = {
     dni?: string;
     avatar_url?: string;
     score?: number;
-    created_at?: string;
-    iat?: number;
-    exp?: number;
   };
 };
 
-//20251215
-// URL base de la API
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-//20251215
-// Componente principal de la página de perfil
+/* ===== Componente ===== */
+
 export default function PerfilStatus() {
   const { token } = useAuth();
+
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
 
-  //20251215
-  // Efecto para cargar los datos del perfil al montar el componente
+  const [uploading, setUploading] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+
+  /* ===== Formulario editable ===== */
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    dni: "",
+  });
+
+  /* ===== Cargar perfil ===== */
+
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL + "/me", {
+    if (!token) return;
+
+    fetch(`${API_URL}/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -45,13 +55,30 @@ export default function PerfilStatus() {
         if (!res.ok) throw new Error("Error al cargar el perfil");
         return res.json();
       })
-      .then((json) => setData(json))
+      .then((json: ApiResponse) => {
+        setData(json);
+
+        if (json.user) {
+          setForm({
+            name: json.user.name || "",
+            email: json.user.email || "",
+            phone: json.user.phone || "",
+            dni: json.user.dni || "",
+          });
+        }
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
 
-  //20251215
-  // Función para subir el avatar
+  const user = data?.user;
+
+  /* ===== Avatar ===== */
+
+  useEffect(() => {
+    setAvatarLoaded(false);
+  }, [user?.avatar_url]);
+
   const uploadAvatar = async (file: File) => {
     if (!token) return;
 
@@ -61,16 +88,13 @@ export default function PerfilStatus() {
     setUploading(true);
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/me/avatar`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const res = await fetch(`${API_URL}/me/avatar`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       if (!res.ok) throw new Error("Upload failed");
 
@@ -94,6 +118,47 @@ export default function PerfilStatus() {
     }
   };
 
+  /* ===== Guardar perfil ===== */
+
+  const saveProfile = async () => {
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || "Error guardando perfil");
+      }
+
+      // Reflejar cambios localmente
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              user: {
+                ...prev.user,
+                ...form,
+              },
+            }
+          : prev
+      );
+
+      alert("Perfil actualizado");
+    } catch (e: any) {
+      alert(e?.message || "Error al guardar perfil");
+    }
+  };
+
+  /* ===== Estados visuales ===== */
+
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-blue-200">
@@ -110,8 +175,6 @@ export default function PerfilStatus() {
     );
   }
 
-  const user = data?.user;
-
   if (!user) {
     return (
       <div className="flex justify-center py-20 text-red-400">
@@ -120,114 +183,19 @@ export default function PerfilStatus() {
     );
   }
 
-  const avatarLetter = user.name?.charAt(0)?.toUpperCase() || "?";
+  /* ===== Render ===== */
 
-
-/* =========================
-   Render
-========================= */
   return (
-    <div className="flex justify-center px-4 py-10">
-      <div className="w-full max-w-xl bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 text-gray-900">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          {/* AVATAR CLICABLE */}
-          <label className="relative w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold overflow-hidden cursor-pointer group">
-            {user.avatar_url ? (
-              <img
-                src={`${API_URL}${user.avatar_url}`}
-                alt="Avatar"
-                className="w-full h-full object-cover group-hover:opacity-80 transition"
-              />
-            ) : (
-              <span>{avatarLetter}</span>
-            )}
-
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadAvatar(file);
-                e.currentTarget.value = "";
-              }}
-            />
-
-            {uploading && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-sm">
-                Subiendo…
-              </div>
-            )}
-          </label>
-
-          <div>
-            <h1 className="text-2xl font-bold">
-              {user.name || "Usuario"}
-            </h1>
-            <p className="text-sm text-gray-600">
-              {user.email || "—"}
-            </p>
-          </div>
-
-          <div className="ml-auto text-center">
-            <p className="text-xs text-gray-500">Puntuación</p>
-            <p className="text-2xl font-bold text-indigo-600">
-              {user.score ?? 0}
-            </p>
-          </div>
-        </div>
-
-        {/* Tabla */}
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <tbody className="divide-y">
-              <tr>
-                <td className="px-4 py-3 font-medium bg-gray-50">
-                  Nombre
-                </td>
-                <td className="px-4 py-3">
-                  {user.name || "—"}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 font-medium bg-gray-50">
-                  Email
-                </td>
-                <td className="px-4 py-3">
-                  {user.email || "—"}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 font-medium bg-gray-50">
-                  Teléfono
-                </td>
-                <td className="px-4 py-3">
-                  {user.phone || "—"}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 font-medium bg-gray-50">
-                  DNI
-                </td>
-                <td className="px-4 py-3">
-                  {user.dni || "—"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Acciones */}
-        <div className="mt-6 flex justify-end">
-          <button
-            disabled
-            className="rounded-lg px-4 py-2 bg-indigo-600 text-white font-semibold opacity-50 cursor-not-allowed"
-          >
-            Editar perfil (próximamente)
-          </button>
-        </div>
-      </div>
-    </div>
+    <PerfilStatus_Render
+      user={user}
+      form={form}
+      setForm={setForm}
+      onSave={saveProfile}
+      avatarLoaded={avatarLoaded}
+      setAvatarLoaded={setAvatarLoaded}
+      uploading={uploading}
+      uploadAvatar={uploadAvatar}
+      apiUrl={API_URL}
+    />
   );
 }

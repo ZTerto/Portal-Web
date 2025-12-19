@@ -2,8 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./utils/AuthContext";
 
 //20251215
-// Barra de abajo y protección de acceso
+// Barra de abajo
 import BottomBar from "./utils/BottomBar";
+
+//20251215
+// Protección de páginas
 import ProtectedAccess from "./utils/Protected";
 
 //20251215
@@ -26,6 +29,7 @@ export default function App() {
       <BrowserRouter>
         <div className="min-h-screen pb-14 bg-gradient-to-t from-black via-blue-950 to-indigo-950 text-white">
           <Routes>
+
             {/* Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/perfil" element={<Perfil />} />
@@ -80,6 +84,15 @@ export default function App() {
             />
 
             <Route
+              path="/ludoteca/:id"
+              element={
+                <ProtectedAccess>
+                  <Ludoteca />
+                </ProtectedAccess>
+              }
+            />
+
+            <Route
               path="/miembros"
               element={
                 <ProtectedAccess>
@@ -98,7 +111,7 @@ export default function App() {
             />
           </Routes>
 
-          {/* Siempre visible */}
+          {/* Barra de abajo, siempre visible */}
           <BottomBar />
         </div>
       </BrowserRouter>

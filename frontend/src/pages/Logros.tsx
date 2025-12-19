@@ -1,16 +1,16 @@
+import Logros_Render from "./Logros_Render";
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
-//20251215
-// Definición del tipo de datos de un logro
 type Logro = {
   id: number;
   name: string;
   description: string;
 };
 
-//20251215
-// Componente principal de la página de logros
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function Logros() {
   const { token, canAdmin, canOrganize } = useAuth();
 
@@ -21,12 +21,10 @@ export default function Logros() {
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-//20251215
-// Cargar logros
   useEffect(() => {
     if (!token) return;
 
-    fetch(import.meta.env.VITE_API_URL + "/achievements", {
+    fetch(`${API_URL}/achievements`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -40,15 +38,10 @@ export default function Logros() {
       .finally(() => setLoading(false));
   }, [token]);
 
-//20251215
-// Crear logro
-// ADMIN/ORGANIZER ONLY
-const createAchievement = async () => {
-  if (!newName.trim() || !newDescription.trim()) return;
+  const createAchievement = async () => {
+    if (!newName.trim() || !newDescription.trim()) return;
 
-  const res = await fetch(
-    import.meta.env.VITE_API_URL + "/achievements",
-    {
+    const res = await fetch(`${API_URL}/achievements`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -58,57 +51,45 @@ const createAchievement = async () => {
         name: newName.trim(),
         description: newDescription.trim(),
       }),
+    });
+
+    if (!res.ok) {
+      alert("No se pudo crear el logro");
+      return;
     }
-  );
 
-  if (!res.ok) {
-    alert("No se pudo crear el logro");
-    return;
-  }
+    const created = await res.json();
+    setLogros((prev) => [...prev, created]);
+    setNewName("");
+    setNewDescription("");
+  };
 
-  const created = await res.json();
-  setLogros((prev) => [...prev, created]);
-  setNewName("");
-  setNewDescription("");
-};
-
-//20251215
-// Borrar logro 
-// ADMIN ONLY
   const deleteAchievement = async (id: number) => {
     if (!confirm("¿Eliminar este logro?")) return;
 
-    const res = await fetch(
-      import.meta.env.VITE_API_URL + `/achievements/${id}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const res = await fetch(`${API_URL}/achievements/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     if (!res.ok) {
       alert("No se pudo borrar el logro");
       return;
     }
+
     setLogros((prev) => prev.filter((l) => l.id !== id));
   };
 
-//20251215
-// Función para obtener la URL de la imagen del logro
   function achievementImage(name: string) {
-  const slug = name
-    .toLowerCase()
-    .normalize("NFD")                 // quita acentos
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_");
+    const slug = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
 
-  return `${import.meta.env.VITE_API_URL}/uploads/achievements/${slug}.png`;
-}
+    return `${API_URL}/uploads/achievements/${slug}.png`;
+  }
 
-
-/* =========================
-   Render
-========================= */
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-blue-200">
@@ -126,98 +107,17 @@ const createAchievement = async () => {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Logros</h1>
-
-      {/* LISTADO */}
-      <div className="grid grid-cols-2 gap-4">
-        {logros.map((logro) => (
-          <div
-            key={logro.id}
-            className="relative bg-white/90 text-gray-900 rounded-2xl shadow p-4 flex gap-4"
-          >
-            {/* ❌ BORRAR (solo admin) */}
-            {canAdmin && (
-              <button
-                title="Eliminar logro"
-                onClick={() => deleteAchievement(logro.id)}
-                className="
-                  absolute top-3 right-3
-                  w-5 h-5 rounded-full
-                  bg-white text-red-600
-                  text-lg font-bold
-                  flex items-center justify-center
-                  hover:bg-red-100 hover:text-red-800
-                "
-              >
-                ×
-              </button>
-            )}
-
-            {/* Avatar */}
-            <div className="w-14 h-14 flex-shrink-0 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center relative">
-  <img
-    src={achievementImage(logro.name)}
-    alt={logro.name}
-    className="w-full h-full object-contain"
-    onError={(e) => {
-      e.currentTarget.style.display = "none";
-    }}
-  />
-  <span className="absolute text-white font-bold pointer-events-none opacity-0">
-    {logro.name.charAt(0).toUpperCase()}
-  </span>
-</div>
-
-
-            {/* Texto */}
-            <div>
-              <p className="font-semibold">
-                {logro.name}
-                {canAdmin && (
-                  <span className="ml-2 text-xs text-gray-400">
-                    #{logro.id}
-                  </span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
-                {logro.description}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* CREAR LOGRO */}
-      {(canAdmin || canOrganize) && (
-        <div className="mt-8 p-4 bg-white/90 rounded-xl shadow text-gray-900">
-          <h2 className="font-semibold mb-2">
-            Crear nuevo logro (La imagen es generada posteriormente por Terto)
-          </h2>
-
-          <input
-            type="text"
-            placeholder="ej: Pokemon_drinking_game"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="w-full mb-2 p-2 border rounded"
-          />
-
-          <textarea
-            placeholder="Descripción del logro"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            className="w-full mb-2 p-2 border rounded"
-          />
-
-          <button
-            onClick={createAchievement}
-            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          >
-            +
-          </button>
-        </div>
-      )}
-    </div>
+    <Logros_Render
+      logros={logros}
+      canAdmin={canAdmin}
+      canOrganize={canOrganize}
+      newName={newName}
+      newDescription={newDescription}
+      onChangeName={setNewName}
+      onChangeDescription={setNewDescription}
+      onCreate={createAchievement}
+      onDelete={deleteAchievement}
+      achievementImage={achievementImage}
+    />
   );
 }

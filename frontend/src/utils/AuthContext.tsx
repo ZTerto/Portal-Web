@@ -47,7 +47,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 /* =========================
    Provider
 ========================= */
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -114,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const meData = await meRes.json();
 
+    console.log("🔍 /me response:", meData);
     setUser(meData.user);
     localStorage.setItem("user", JSON.stringify(meData.user));
   };
@@ -153,8 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const roles = user?.roles ?? [];
 
   const canAdmin = roles.includes("ADMIN");
-  const canOrganize =
-    roles.includes("ADMIN") || roles.includes("ORGANIZER");
+  const canOrganize = roles.includes("ADMIN") || roles.includes("ORGANIZER");
 
   return (
     <AuthContext.Provider

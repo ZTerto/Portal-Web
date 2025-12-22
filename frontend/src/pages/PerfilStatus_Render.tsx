@@ -100,7 +100,6 @@ export default function PerfilStatus_Render({
   )}
 </label>
 
-
           {/* INFO */}
           <div>
             <h1 className="text-2xl font-bold">

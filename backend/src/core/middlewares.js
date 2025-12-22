@@ -45,6 +45,7 @@ export async function requireAuth(req, res, next) {
     // 3️⃣ Usuario completo con roles
     req.user = result.rows[0];
 
+    console.log("REQ.USER:", req.user);  // LOG DE PRUEBA
     next();
   } catch (err) {
     console.error("AUTH ERROR:", err);

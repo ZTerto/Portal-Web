@@ -61,7 +61,7 @@ test:
 	@echo ""
 
 	@echo "🔍 Esperando a PostgreSQL..."
-	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+	@for i in 1 2 3; do \
 		docker exec postgres-db pg_isready -U appuser -d appdb >/dev/null 2>&1 && break; \
 		echo "   ⏳ PostgreSQL aún no listo..."; \
 		sleep 1; \

@@ -36,6 +36,7 @@ export default function PerfilStatus() {
     email: "",
     phone: "",
     dni: "",
+    password: "",
   });
 
   /* ===== Cargar perfil ===== */
@@ -60,6 +61,7 @@ export default function PerfilStatus() {
             email: json.user.email || "",
             phone: json.user.phone || "",
             dni: json.user.dni || "",
+            password: "",
           });
         }
       })

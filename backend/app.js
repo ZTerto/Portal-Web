@@ -57,6 +57,8 @@ app.get("/ping", (req, res) => {
 
 app.get("/me", requireAuth, async (req, res) => {
   try {
+    console.log("🔍 /me req.user =", req.user); // 👈 AÑADIR SOLO ESTA LÍNEA
+
     res.json({
       message: "Acceso autorizado",
       user: req.user,
@@ -66,6 +68,7 @@ app.get("/me", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 });
+
 
 
 export default app;

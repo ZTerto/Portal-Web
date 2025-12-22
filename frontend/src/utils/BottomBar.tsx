@@ -99,20 +99,19 @@ export default function BottomBar() {
         {hasUser && (
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
 
-            {/* Avatar */}
-            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center">
-              {user?.avatar_url ? (
-                <img
-                  src={`${import.meta.env.VITE_API_URL}/${user.avatar_url}`}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
+{/* Avatar */}
+<div className="w-9 h-9 rounded-full overflow-hidden bg-blue-600 text-white flex items-center justify-center font-bold">
+  {user?.avatar_url ? (
+    <img
+      src={`${import.meta.env.VITE_API_URL}${user.avatar_url}`}
+      alt={user.name}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    user?.name?.charAt(0).toUpperCase()
+  )}
+</div>
+
 
             {/* Nombre + logout */}
             <div className="flex flex-col leading-tight">

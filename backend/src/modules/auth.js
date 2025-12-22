@@ -65,6 +65,34 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // 2️⃣ DNI único (si viene informado)
+    if (dni) {
+      const dniExists = await pool.query(
+        "SELECT id FROM users WHERE dni = $1",
+      [dni]
+    );
+
+    if (dniExists.rows.length > 0) {
+      return res.status(409).json({
+          error: "Ese DNI ya está registrado",
+        });
+      }
+    }
+
+    // 3️⃣ Teléfono único (si viene informado)
+    if (phone) {
+      const phoneExists = await pool.query(
+        "SELECT id FROM users WHERE phone = $1",
+      [phone]
+    );
+
+  if (phoneExists.rows.length > 0) {
+    return res.status(409).json({
+      error: "Ese teléfono ya está registrado",
+    });
+  }
+}
+
     // 3️⃣ Hash de contraseña
     const passwordHash = await bcrypt.hash(password, 10);
 

@@ -6,6 +6,8 @@ export type RegisterForm = {
   password: string;
 };
 
+//20251222
+// Valida el registro
 export function validateRegisterForm(form: RegisterForm): string | null {
   // Nombre
   if (!form.name.trim()) {

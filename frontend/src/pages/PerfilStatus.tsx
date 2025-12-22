@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
 /* ===== Tipos ===== */
-
 type ApiResponse = {
   message?: string;
   user?: {
@@ -21,7 +20,6 @@ const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 /* ===== Componente ===== */
-
 export default function PerfilStatus() {
   const { token } = useAuth();
 
@@ -33,7 +31,6 @@ export default function PerfilStatus() {
   const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   /* ===== Formulario editable ===== */
-
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -42,7 +39,6 @@ export default function PerfilStatus() {
   });
 
   /* ===== Cargar perfil ===== */
-
   useEffect(() => {
     if (!token) return;
 
@@ -73,8 +69,8 @@ export default function PerfilStatus() {
 
   const user = data?.user;
 
-  /* ===== Avatar ===== */
 
+  /* ===== Avatar ===== */
   useEffect(() => {
     setAvatarLoaded(false);
   }, [user?.avatar_url]);
@@ -119,7 +115,6 @@ export default function PerfilStatus() {
   };
 
   /* ===== Guardar perfil ===== */
-
   const saveProfile = async () => {
     if (!token) return;
 
@@ -158,7 +153,6 @@ export default function PerfilStatus() {
   };
 
   /* ===== Estados visuales ===== */
-
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-blue-200">

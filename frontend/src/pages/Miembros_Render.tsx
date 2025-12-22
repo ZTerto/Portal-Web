@@ -12,6 +12,7 @@ type Member = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   avatar_url?: string | null;
   roles: Role[];
   achievements: Achievement[];
@@ -112,6 +113,9 @@ export default function Miembros_Render({
                 <p className="font-semibold">{member.name}</p>
                 <p className="text-xs text-gray-500">
                   {member.email}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {member.phone}
                 </p>
                 <span className="text-xs text-indigo-700 font-medium">
                   {role}

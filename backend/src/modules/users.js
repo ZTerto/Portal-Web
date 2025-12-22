@@ -8,6 +8,27 @@ import { requireAuth } from "../core/middlewares.js";
 const router = express.Router();
 
 /* =========================
+   DATA OF USER
+========================= */
+router.get("/me", requireAuth, async (req, res) => {
+  const result = await pool.query(`
+    SELECT
+      id,
+      name,
+      email,
+      phone,
+      dni,
+      avatar_url,
+      score
+    FROM users
+    WHERE id = $1
+  `, [req.user.id]);
+
+  res.json({ user: result.rows[0] });
+});
+
+
+/* =========================
    AVATAR UPLOAD SETUP
 ========================= */
 const avatarDir = path.resolve(process.cwd(), "uploads", "avatars");

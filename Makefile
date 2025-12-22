@@ -17,16 +17,22 @@ down:
 
 	@echo "✨ Entorno detenido completamente."
 
-# Reiniciar entorno docker (sin borrar base de datos)
 reload:
-	@echo "🔄 Reiniciando entorno (sin borrar base de datos)..."
+	@echo "🔄 Reiniciando entorno (sin borrar BD)..."
 	docker-compose down
 	docker-compose up -d --build
+
+	@echo "⏳ Esperando a backend..."
+	@until curl -s http://localhost:3000/ping > /dev/null; do \
+		sleep 1; \
+	done
+
 	@echo ""
 	@echo "🚀 Servicios levantados:"
 	@echo "PostgreSQL → localhost:55432"
 	@echo "Backend    → http://localhost:3000"
 	@echo "Frontend   → http://localhost:5173"
+
 
 
 # Probar entorno completo

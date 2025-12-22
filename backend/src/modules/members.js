@@ -34,6 +34,7 @@ router.get("/", requireAuth, async (req, res) => {
         u.id,
         u.name,
         u.email,
+        u.phone,
         u.avatar_url,
 
         -- Rol único
@@ -132,8 +133,6 @@ router.delete("/:id/achievements/:achievementId", requireAuth, async (req, res) 
   }
 });
 
-export default router;
-
 
 /* =========================
    DELETE MEMBER (ADMIN)
@@ -171,3 +170,5 @@ router.delete("/:id", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Error borrando usuario" });
   }
 });
+
+export default router;

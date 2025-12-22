@@ -342,25 +342,49 @@ router.patch(
 );
 
 /* =========================
-   DELETE LUDOTECA (SOLO CREADOR)
+   DELETE LUDOTECA (OWNER / ADMIN / ORGANIZER)
 ========================= */
 
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const owner = await pool.query(
+    // 1️⃣ Obtener creador
+    const ownerResult = await pool.query(
       "SELECT created_by FROM ludoteca WHERE id = $1",
       [id]
     );
 
-    if (owner.rows[0]?.created_by !== req.user.id) {
+    if (ownerResult.rows.length === 0) {
+      return res.status(404).json({ error: "Ludoteca no encontrada" });
+    }
+
+    const createdBy = ownerResult.rows[0].created_by;
+
+    // 2️⃣ Obtener roles del usuario
+    const rolesResult = await pool.query(
+      `
+      SELECT r.name
+      FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id = $1
+      `,
+      [req.user.id]
+    );
+
+    const roles = rolesResult.rows.map((r) => r.name);
+
+    const isAdmin = roles.includes("ADMIN");
+    const isOrganizer = roles.includes("ORGANIZER");
+    const isOwner = createdBy === req.user.id;
+
+    // 3️⃣ Permiso
+    if (!isOwner && !isAdmin && !isOrganizer) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    await pool.query("DELETE FROM ludoteca WHERE id = $1", [
-      id,
-    ]);
+    // 4️⃣ Borrar
+    await pool.query("DELETE FROM ludoteca WHERE id = $1", [id]);
 
     res.json({ success: true });
   } catch (err) {

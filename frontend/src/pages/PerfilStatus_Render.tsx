@@ -68,51 +68,38 @@ export default function PerfilStatus_Render({
         {/* HEADER */}
         <div className="flex items-center gap-4">
 
-          {/* AVATAR */}
-          <label
-            className="
-              relative w-20 h-20 rounded-full
-              bg-indigo-600
-              flex items-center justify-center
-              overflow-hidden
-              cursor-pointer
-              text-white
-            "
-          >
-            {user.avatar_url && (
-              <img
-                src={`${apiUrl}${user.avatar_url}`}
-                alt="Avatar"
-                className="w-full h-full object-cover transition-opacity"
-                onLoad={() => setAvatarLoaded(true)}
-                onError={() => setAvatarLoaded(false)}
-                style={{ opacity: avatarLoaded ? 1 : 0 }}
-              />
-            )}
+{/* AVATAR */}
+<label className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer bg-indigo-600 text-white flex items-center justify-center">
+  {user.avatar_url ? (
+    <img
+      src={`${apiUrl}${user.avatar_url}`}
+      alt="Avatar"
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <span className="text-3xl font-bold select-none">
+      {avatarLetter}
+    </span>
+  )}
 
-            {!avatarLoaded && (
-              <span className="absolute text-3xl font-bold select-none">
-                {avatarLetter}
-              </span>
-            )}
+  <input
+    type="file"
+    accept="image/*"
+    hidden
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file) uploadAvatar(file);
+      e.currentTarget.value = "";
+    }}
+  />
 
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadAvatar(file);
-                e.currentTarget.value = "";
-              }}
-            />
+  {uploading && (
+    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm">
+      Subiendo…
+    </div>
+  )}
+</label>
 
-            {uploading && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm">
-                Subiendo…
-              </div>
-            )}
-          </label>
 
           {/* INFO */}
           <div>

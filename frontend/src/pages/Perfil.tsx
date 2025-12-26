@@ -4,11 +4,25 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 import { validateRegisterForm } from "../utils/validators";
 
-//20251215
-// Componente principal de la página de perfil (registro)
+/**
+ * Perfil
+ * ------
+ * Página de registro de usuario.
+ *
+ * RESPONSABILIDADES:
+ * - Gestionar el formulario de registro
+ * - Validar datos antes de enviar
+ * - Llamar a register() del AuthContext
+ * - Redirigir según estado de sesión
+ *
+ */
 export default function Perfil() {
   const navigate = useNavigate();
   const { register, user } = useAuth();
+
+  /* =========================
+     Estado del formulario
+  ========================= */
 
   const [form, setForm] = useState({
     name: "",
@@ -18,8 +32,15 @@ export default function Perfil() {
     password: "",
   });
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
+
+  /* =========================
+     Redirección automática
+     Si el usuario ya está logueado
+  ========================= */
 
   useEffect(() => {
     if (user) {
@@ -27,7 +48,13 @@ export default function Perfil() {
     }
   }, [user, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* =========================
+     Handlers
+  ========================= */
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
@@ -37,7 +64,10 @@ export default function Perfil() {
   const handleSubmit = async () => {
     setError(null);
 
-    const validationError = validateRegisterForm(form);
+    // Validación previa (frontend)
+    const validationError =
+      validateRegisterForm(form);
+
     if (validationError) {
       setError(validationError);
       return;
@@ -49,11 +79,17 @@ export default function Perfil() {
       await register(form);
       navigate("/perfil/login");
     } catch (err: any) {
-      setError(err.message || "Error al registrarse");
+      setError(
+        err.message || "Error al registrarse"
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  /* =========================
+     Render
+  ========================= */
 
   return (
     <Perfil_Render

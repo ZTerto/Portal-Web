@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
-/* ===== Tipos ===== */
+/* =====================================================
+   Tipos
+===================================================== */
 
 type Participant = {
   id: string;
@@ -27,11 +29,17 @@ type Ludoteca = {
   is_joined?: boolean;
 };
 
-/* ===== Constantes ===== */
+/* =====================================================
+   Configuración
+===================================================== */
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+/**
+ * Tipos disponibles para la ludoteca
+ * (solo afectan al selector del formulario)
+ */
 const TYPES = [
   "Juego de mesa",
   "Juego de cartas",
@@ -40,7 +48,9 @@ const TYPES = [
   "Otros",
 ];
 
-/* ===== Utils ===== */
+/* =====================================================
+   Utilidades
+===================================================== */
 
 const formatDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString("es-ES") : null;
@@ -48,18 +58,30 @@ const formatDate = (iso?: string) =>
 const formatDateTime = (iso?: string) =>
   iso ? new Date(iso).toLocaleString("es-ES") : "";
 
-/* ===== Componente ===== */
+/* =====================================================
+   Componente principal (LÓGICA)
+===================================================== */
 
 export default function Ludoteca() {
-  const { token, user, canAdmin, canOrganize } = useAuth();
+  // Revisión de permisos
+  const { token, user } = useAuth();
+  //console.log("🧑 user desde useAuth:", user);
+  //console.log("🎭 user?.role:", user?.role);
+  const canAdmin = user?.role === "ADMIN";
+  const canOrganize = user?.role === "ADMIN" || user?.role === "ORGANIZER";
+
+  // Si hay :id en la URL → vista detalle
   const { id } = useParams<{ id?: string }>();
   const isDetailView = Boolean(id);
+
+  /* =========================
+     Estado
+  ========================= */
 
   const [ludotecas, setLudotecas] = useState<Ludoteca[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* ===== Form crear ===== */
-
+  // Formulario de creación
   const [title, setTitle] = useState("");
   const [type, setType] = useState(TYPES[0]);
   const [description, setDescription] = useState("");
@@ -68,7 +90,9 @@ export default function Ludoteca() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  /* ===== Cargar ludoteca ===== */
+  /* =========================
+     Cargar ludoteca
+  ========================= */
 
   useEffect(() => {
     if (!token) return;
@@ -84,10 +108,15 @@ export default function Ludoteca() {
     })
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data?.error || "Error cargando ludoteca");
+        if (!r.ok)
+          throw new Error(
+            data?.error || "Error cargando ludoteca"
+          );
         return data;
       })
-      .then((data) => setLudotecas(id ? [data] : data))
+      .then((data) =>
+        setLudotecas(id ? [data] : data)
+      )
       .catch((e) => {
         console.error("LUDOTECA LOAD ERROR:", e);
         setLudotecas([]);
@@ -95,7 +124,9 @@ export default function Ludoteca() {
       .finally(() => setLoading(false));
   }, [token, id]);
 
-  /* ===== Acciones ===== */
+  /* =========================
+     Acciones
+  ========================= */
 
   const uploadImage = async (file: File) => {
     if (!token) return;
@@ -107,11 +138,14 @@ export default function Ludoteca() {
     setUploading(true);
 
     try {
-      const res = await fetch(`${API_URL}/ludoteca/upload-image`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      const res = await fetch(
+        `${API_URL}/ludoteca/upload-image`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -126,7 +160,8 @@ export default function Ludoteca() {
   };
 
   const createLudoteca = async () => {
-    if (!token || !title.trim() || !description.trim()) return;
+    if (!token || !title.trim() || !description.trim())
+      return;
 
     const res = await fetch(`${API_URL}/ludoteca`, {
       method: "POST",
@@ -138,20 +173,25 @@ export default function Ludoteca() {
         title: title.trim(),
         type,
         description: description.trim(),
-        participants: participants ? Number(participants) : null,
+        participants: participants
+          ? Number(participants)
+          : null,
         duration: duration || null,
         image_url: imageUrl,
       }),
     });
 
     const created = await res.json();
+
     if (!res.ok) {
       alert(created?.error || "Error creando ludoteca");
       return;
     }
 
-    setLudotecas((p) => [created, ...p]);
+    // Añadir al listado
+    setLudotecas((prev) => [created, ...prev]);
 
+    // Reset formulario
     setTitle("");
     setType(TYPES[0]);
     setDescription("");
@@ -163,33 +203,48 @@ export default function Ludoteca() {
   const join = async (id: number) => {
     if (!token) return;
 
-    const res = await fetch(`${API_URL}/ludoteca/${id}/join`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `${API_URL}/ludoteca/${id}/join`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const updated = await res.json();
     if (!res.ok) return alert(updated?.error);
 
-    setLudotecas((p) => p.map((l) => (l.id === id ? updated : l)));
+    setLudotecas((prev) =>
+      prev.map((l) =>
+        l.id === id ? updated : l
+      )
+    );
   };
 
   const leave = async (id: number) => {
     if (!token) return;
 
-    const res = await fetch(`${API_URL}/ludoteca/${id}/join`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `${API_URL}/ludoteca/${id}/join`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const updated = await res.json();
     if (!res.ok) return alert(updated?.error);
 
-    setLudotecas((p) => p.map((l) => (l.id === id ? updated : l)));
+    setLudotecas((prev) =>
+      prev.map((l) =>
+        l.id === id ? updated : l
+      )
+    );
   };
 
   const remove = async (id: number) => {
-    if (!token || !confirm("¿Eliminar de la ludoteca?")) return;
+    if (!token || !confirm("¿Eliminar de la ludoteca?"))
+      return;
 
     const res = await fetch(`${API_URL}/ludoteca/${id}`, {
       method: "DELETE",
@@ -202,28 +257,42 @@ export default function Ludoteca() {
       return;
     }
 
-    setLudotecas((p) => p.filter((l) => l.id !== id));
+    setLudotecas((prev) =>
+      prev.filter((l) => l.id !== id)
+    );
   };
 
-  const replaceImage = async (id: number, file: File) => {
+  const replaceImage = async (
+    id: number,
+    file: File
+  ) => {
     if (!token) return;
 
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch(`${API_URL}/ludoteca/${id}/image`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
+    const res = await fetch(
+      `${API_URL}/ludoteca/${id}/image`,
+      {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      }
+    );
 
     const updated = await res.json();
     if (!res.ok) return alert(updated?.error);
 
-    setLudotecas((p) => p.map((l) => (l.id === id ? updated : l)));
+    setLudotecas((prev) =>
+      prev.map((l) =>
+        l.id === id ? updated : l
+      )
+    );
   };
 
-  /* ===== Render ===== */
+  /* =========================
+     Render
+  ========================= */
 
   return (
     <Ludoteca_Render

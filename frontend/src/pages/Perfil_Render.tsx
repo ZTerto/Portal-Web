@@ -1,6 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+/* =====================================================
+   Tipos
+===================================================== */
+
 type RegisterForm = {
   name: string;
   dni: string;
@@ -17,6 +21,10 @@ type Props = {
   onSubmit: () => void;
 };
 
+/* =====================================================
+   Componente de Render
+===================================================== */
+
 export default function Perfil_Render({
   form,
   error,
@@ -31,7 +39,13 @@ export default function Perfil_Render({
           Si no hay confianza...
         </h1>
 
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        {/* =====================
+            Formulario
+           ===================== */}
+        <form
+          className="space-y-4"
+          onSubmit={(e) => e.preventDefault()}
+        >
           <div>
             <label className="block text-sm font-medium mb-1">
               ¿Cómo te conocemos?
@@ -103,33 +117,58 @@ export default function Perfil_Render({
           </div>
         </form>
 
+        {/* =====================
+            Error
+           ===================== */}
         {error && (
           <p className="mt-4 text-sm text-red-600 text-center">
             {error}
           </p>
         )}
 
+        {/* =====================
+            Enviar
+           ===================== */}
         <div className="mt-6">
           <button
             onClick={onSubmit}
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 text-white font-semibold py-2 hover:bg-blue-700"
+            className="
+              w-full rounded-lg
+              bg-blue-600 text-white font-semibold
+              py-2
+              hover:bg-blue-700
+            "
           >
             {loading ? "Registrando..." : "Registrarme"}
           </button>
         </div>
 
+        {/* =====================
+            Texto informativo
+           ===================== */}
         <p className="mt-6 text-base italic text-gray-700 leading-relaxed">
-          Esta información es exclusivamente para gestionar la organización de
-          las jornadas. Si sigues teniendo dudas pero igualmente quieres
-          registrarte habla con Terto. ¿Dónde encuentro a Terto? Si has
-          llegado aquí sabes de sobra cómo contactar con esa persona...
+          Esta información es exclusivamente para gestionar la
+          organización de las jornadas. Si sigues teniendo dudas
+          pero igualmente quieres registrarte habla con Terto.
+          ¿Dónde encuentro a Terto? Si has llegado aquí sabes de
+          sobra cómo contactar con esa persona...
         </p>
 
+        {/* =====================
+            Enlace a login
+           ===================== */}
         <div className="mt-6">
           <Link
             to="/perfil/login"
-            className="block w-full text-center rounded-lg border border-blue-600 text-blue-700 font-semibold py-2 hover:bg-blue-50"
+            className="
+              block w-full text-center
+              rounded-lg
+              border border-blue-600
+              text-blue-700 font-semibold
+              py-2
+              hover:bg-blue-50
+            "
           >
             ¡Eh! Yo ya existo aquí
           </Link>

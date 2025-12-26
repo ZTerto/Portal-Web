@@ -1,5 +1,9 @@
 import React from "react";
 
+/* =====================================================
+   Props
+===================================================== */
+
 type Props = {
   name: string;
   setName: (v: string) => void;
@@ -9,6 +13,10 @@ type Props = {
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
 };
+
+/* =====================================================
+   Componente de Render
+===================================================== */
 
 export default function PerfilLogin_Render({
   name,
@@ -27,8 +35,9 @@ export default function PerfilLogin_Render({
         </h1>
 
         <form onSubmit={onSubmit} className="space-y-4">
-
-          {/* Nombre */}
+          {/* =====================
+              Nombre
+             ===================== */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Nombre
@@ -36,13 +45,17 @@ export default function PerfilLogin_Render({
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
               className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          {/* Contraseña */}
+          {/* =====================
+              Contraseña
+             ===================== */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Contraseña
@@ -50,22 +63,36 @@ export default function PerfilLogin_Render({
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
+          {/* =====================
+              Error
+             ===================== */}
           {error && (
             <p className="text-red-600 text-sm text-center">
               {error}
             </p>
           )}
 
+          {/* =====================
+              Enviar
+             ===================== */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 text-white font-semibold py-2 hover:bg-blue-700 disabled:opacity-50"
+            className="
+              w-full rounded-lg
+              bg-blue-600 text-white font-semibold
+              py-2
+              hover:bg-blue-700
+              disabled:opacity-50
+            "
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

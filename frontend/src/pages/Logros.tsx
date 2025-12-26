@@ -12,7 +12,12 @@ const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export default function Logros() {
-  const { token, canAdmin, canOrganize } = useAuth();
+  // Revisión de permisos
+  const { token, user } = useAuth();
+  //console.log("🧑 user desde useAuth:", user);
+  //console.log("🎭 user?.role:", user?.role);
+  const canAdmin = user?.role === "ADMIN";
+  const canOrganize = user?.role === "ADMIN" || user?.role === "ORGANIZER";
 
   const [logros, setLogros] = useState<Logro[]>([]);
   const [loading, setLoading] = useState(true);

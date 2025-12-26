@@ -37,7 +37,9 @@ export default function Logros_Render({
 
       {/* LISTADO */}
       <div className="grid grid-cols-2 gap-4">
-        {logros.map((logro) => (
+        {[...logros]
+          .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }))
+          .map((logro) => (
           <div
             key={logro.id}
             className="relative bg-white/90 text-gray-900 rounded-2xl shadow p-4 flex gap-4"

@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 
-
-/* ===== tipos ===== */
+/* =====================================================
+   Tipos
+===================================================== */
 
 type Participant = {
   id: string;
@@ -28,11 +29,16 @@ type Activity = {
   created_by?: string;
 };
 
+/* =====================================================
+   Configuración
+===================================================== */
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-/* ===== utilidades ===== */
+/* =====================================================
+   Utilidades de formato
+===================================================== */
 
 const formatDate = (iso?: string) => {
   if (!iso) return null;
@@ -44,16 +50,30 @@ const formatDateTime = (iso?: string) => {
   return new Date(iso).toLocaleString("es-ES");
 };
 
-/* ===== componente ===== */
+
+/* =====================================================
+   Componente principal (LÓGICA)
+===================================================== */
 
 export default function Actividades() {
-  const { token, canAdmin, canOrganize, user } = useAuth();
+  // Revisión de permisos
+  const { token, user } = useAuth();
+  //console.log("🧑 user desde useAuth:", user);
+  //console.log("🎭 user?.role:", user?.role);
+  const canAdmin = user?.role === "ADMIN";
+  const canOrganize = user?.role === "ADMIN" || user?.role === "ORGANIZER";
+
+  // Si hay :id en la ruta → vista detalle
   const { id } = useParams<{ id?: string }>();
   const isDetailView = Boolean(id);
 
+  /* =========================
+     Estado
+  ========================= */
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Formulario de creación
   const [title, setTitle] = useState("");
   const [type, setType] = useState("Rol de mesa");
   const [description, setDescription] = useState("");
@@ -61,6 +81,11 @@ export default function Actividades() {
   const [duration, setDuration] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  
+  /* =========================
+     Cargar actividades
+  ========================= */
 
   useEffect(() => {
     if (!token) return;
@@ -73,9 +98,15 @@ export default function Actividades() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => setActivities(id ? [data] : data))
+      .then((data) =>
+        setActivities(id ? [data] : data)
+      )
       .finally(() => setLoading(false));
   }, [token, id]);
+
+  /* =========================
+     Subida de imagen (crear)
+  ========================= */
 
   const uploadImage = async (file: File) => {
     if (!token) return;
@@ -100,6 +131,11 @@ export default function Actividades() {
     setUploading(false);
   };
 
+  /* =========================
+     Crear actividad
+     (ADMIN / ORGANIZER)
+  ========================= */
+
   const createActivity = async () => {
     if (!token || !title || !description) return;
 
@@ -113,14 +149,20 @@ export default function Actividades() {
         title,
         type,
         description,
-        participants: participants ? Number(participants) : null,
+        participants: participants
+          ? Number(participants)
+          : null,
         duration: duration ? Number(duration) : null,
         image_url: imageUrl,
       }),
     });
 
     const created = await res.json();
-    setActivities((p) => [created, ...p]);
+
+    // Añadir al listado
+    setActivities((prev) => [created, ...prev]);
+
+    // Reset formulario
     setTitle("");
     setDescription("");
     setParticipants("");
@@ -128,16 +170,32 @@ export default function Actividades() {
     setImageUrl(null);
   };
 
+  /* =========================
+     Eliminar actividad
+     (ADMIN)
+  ========================= */
+
   const deleteActivity = async (id: number) => {
     if (!token || !confirm("¿Eliminar actividad?")) return;
+
     await fetch(`${API_URL}/activities/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    setActivities((p) => p.filter((a) => a.id !== id));
+
+    setActivities((prev) =>
+      prev.filter((a) => a.id !== id)
+    );
   };
 
-  const replaceActivityImage = async (id: number, file: File) => {
+  /* =========================
+     Reemplazar imagen
+  ========================= */
+
+  const replaceActivityImage = async (
+    id: number,
+    file: File
+  ) => {
     if (!token) return;
 
     const formData = new FormData();
@@ -156,10 +214,15 @@ export default function Actividades() {
     );
 
     const updated = await res.json();
-    setActivities((p) =>
-      p.map((a) => (a.id === id ? updated : a))
+
+    setActivities((prev) =>
+      prev.map((a) => (a.id === id ? updated : a))
     );
   };
+
+  /* =========================
+     Participación
+  ========================= */
 
   const joinActivity = async (id: number) => {
     if (!token) return;
@@ -173,8 +236,8 @@ export default function Actividades() {
     );
 
     const updated = await res.json();
-    setActivities((p) =>
-      p.map((a) => (a.id === id ? updated : a))
+    setActivities((prev) =>
+      prev.map((a) => (a.id === id ? updated : a))
     );
   };
 
@@ -190,8 +253,8 @@ export default function Actividades() {
     );
 
     const updated = await res.json();
-    setActivities((p) =>
-      p.map((a) => (a.id === id ? updated : a))
+    setActivities((prev) =>
+      prev.map((a) => (a.id === id ? updated : a))
     );
   };
 
@@ -210,20 +273,26 @@ export default function Actividades() {
     );
 
     const updated = await res.json();
-    setActivities((p) =>
-      p.map((a) =>
+    setActivities((prev) =>
+      prev.map((a) =>
         a.id === activityId ? updated : a
       )
     );
   };
+
+  /* =========================
+     Render
+  ========================= */
 
 return (
   <Actividades_Render
     activities={activities}
     loading={loading}
     isDetailView={isDetailView}
+
     canAdmin={canAdmin}
     canOrganize={canOrganize}
+
     imageUrl={imageUrl}
     uploading={uploading}
     title={title}
@@ -236,6 +305,7 @@ return (
     setParticipants={setParticipants}
     duration={duration}
     setDuration={setDuration}
+
     onUploadImage={uploadImage}
     onCreate={createActivity}
     onDelete={deleteActivity}
@@ -243,6 +313,7 @@ return (
     onJoin={joinActivity}
     onLeave={leaveActivity}
     onRemoveParticipant={removeParticipant}
+
     apiUrl={API_URL}
     formatDate={formatDate}
     formatDateTime={formatDateTime}

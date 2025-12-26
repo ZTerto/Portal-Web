@@ -4,23 +4,9 @@ import { requireAuth } from "../core/middlewares.js";
 
 const router = express.Router();
 
-async function getUserRole(userId) {
-  const result = await pool.query(
-    `
-    SELECT r.name
-    FROM user_roles ur
-    JOIN roles r ON r.id = ur.role_id
-    WHERE ur.user_id = $1
-    LIMIT 1
-    `,
-    [userId]
-  );
-
-  return result.rows[0]?.name || null;
-}
-
 /* =========================
    GET /achievements
+   Usuario autenticado
 ========================= */
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -43,9 +29,8 @@ router.get("/", requireAuth, async (req, res) => {
 ========================= */
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const role = await getUserRole(req.user.id);
-
-    if (!["ADMIN", "ORGANIZER"].includes(role)) {
+    // 🔐 Autorización basada en el rol ya cargado por requireAuth
+    if (!["ADMIN", "ORGANIZER"].includes(req.user.role)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -81,22 +66,21 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-
 /* =========================
    DELETE /achievements/:id
    SOLO ADMIN
 ========================= */
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
-    const role = await getUserRole(req.user.id);
-
-    if (role !== "ADMIN") {
+    // 🔐 Solo administradores pueden borrar logros
+    if (req.user.role !== "ADMIN") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    await pool.query("DELETE FROM achievements WHERE id = $1", [
-      req.params.id,
-    ]);
+    await pool.query(
+      "DELETE FROM achievements WHERE id = $1",
+      [req.params.id]
+    );
 
     res.json({ success: true });
   } catch (err) {

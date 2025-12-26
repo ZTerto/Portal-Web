@@ -5,9 +5,12 @@ import { signToken } from "../core/jwt.js";
 
 const router = express.Router();
 
-/* =========================
+/* =====================================================
    VALIDACIÓN REGISTER
-========================= */
+   -----------------------------------------------------
+   Valida formato y reglas básicas del registro.
+   No comprueba unicidad en BD (eso se hace después).
+===================================================== */
 function validateRegisterInput({ name, dni, phone, email, password }) {
   if (!name || !name.trim()) {
     return "El nombre no puede estar vacío";
@@ -40,9 +43,13 @@ function validateRegisterInput({ name, dni, phone, email, password }) {
   return null;
 }
 
-/* =========================
+/* =====================================================
    REGISTER
-========================= */
+   -----------------------------------------------------
+   - Crea un nuevo usuario
+   - Asigna rol USER por defecto
+   - Devuelve JWT + datos básicos
+===================================================== */
 router.post("/register", async (req, res) => {
   try {
     const { name, dni, phone, email, password } = req.body;
@@ -53,7 +60,7 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
-    // 2️⃣ Nombre único (ÚNICA restricción)
+    // 2️⃣ Comprobación de unicidad (nombre)
     const nameExists = await pool.query(
       "SELECT id FROM users WHERE name = $1",
       [name]
@@ -65,38 +72,38 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // 2️⃣ DNI único (si viene informado)
+    // 3️⃣ DNI único (si viene informado)
     if (dni) {
       const dniExists = await pool.query(
         "SELECT id FROM users WHERE dni = $1",
-      [dni]
-    );
+        [dni]
+      );
 
-    if (dniExists.rows.length > 0) {
-      return res.status(409).json({
+      if (dniExists.rows.length > 0) {
+        return res.status(409).json({
           error: "Ese DNI ya está registrado",
         });
       }
     }
 
-    // 3️⃣ Teléfono único (si viene informado)
+    // 4️⃣ Teléfono único (si viene informado)
     if (phone) {
       const phoneExists = await pool.query(
         "SELECT id FROM users WHERE phone = $1",
-      [phone]
-    );
+        [phone]
+      );
 
-  if (phoneExists.rows.length > 0) {
-    return res.status(409).json({
-      error: "Ese teléfono ya está registrado",
-    });
-  }
-}
+      if (phoneExists.rows.length > 0) {
+        return res.status(409).json({
+          error: "Ese teléfono ya está registrado",
+        });
+      }
+    }
 
-    // 3️⃣ Hash de contraseña
+    // 5️⃣ Hash de contraseña
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Crear usuario (email, dni y phone pueden repetirse)
+    // 6️⃣ Crear usuario
     const userResult = await pool.query(
       `
       INSERT INTO users (name, dni, phone, email, password_hash)
@@ -114,7 +121,8 @@ router.post("/register", async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // 5️⃣ Asignar rol USER por defecto
+    // 7️⃣ Asignar rol USER por defecto
+    // (el rol real se resolverá luego en requireAuth)
     const roleResult = await pool.query(
       "SELECT id FROM roles WHERE name = 'USER'"
     );
@@ -130,13 +138,14 @@ router.post("/register", async (req, res) => {
       [user.id, roleResult.rows[0].id]
     );
 
-    // 6️⃣ Crear JWT
+    // 8️⃣ Crear JWT
+    // El token solo contiene identidad mínima
     const token = signToken({
       id: user.id,
       name: user.name,
     });
 
-    // 7️⃣ Respuesta final
+    // 9️⃣ Respuesta final
     res.status(201).json({
       token,
       user: {
@@ -151,9 +160,12 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/* =========================
+/* =====================================================
    LOGIN
-========================= */
+   -----------------------------------------------------
+   - Verifica credenciales
+   - Devuelve JWT + datos básicos
+===================================================== */
 router.post("/login", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -182,6 +194,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
+    // Crear JWT (identidad mínima)
     const token = signToken({
       id: user.id,
       name: user.name,

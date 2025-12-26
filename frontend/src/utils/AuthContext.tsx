@@ -6,18 +6,22 @@ import {
   ReactNode,
 } from "react";
 
-/* =========================
+/* =====================================================
    Tipos
-========================= */
+===================================================== */
 
-export type Role = "USER" | "ORGANIZER" | "ADMIN";
+/**
+ * Roles del sistema.
+ * Coinciden EXACTAMENTE con lo que devuelve el backend.
+ */
+export type Role = "ADMIN" | "ORGANIZER" | "USER";
 
 type User = {
   id: string;
   name: string;
   email?: string;
   avatar_url?: string | null;
-  roles: Role[];
+  role: Role;
 };
 
 type RegisterData = {
@@ -38,26 +42,30 @@ type AuthContextType = {
   canOrganize: boolean;
 };
 
-/* =========================
+/* =====================================================
    Contexto
-========================= */
+===================================================== */
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-/* =========================
+/* =====================================================
    Provider
-========================= */
+===================================================== */
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  /* =========================
-     Recuperar sesión
-  ========================= */
+  /* =====================================================
+     Recuperar sesión al refrescar
+     -----------------------------------------------------
+     - Si hay token en localStorage
+     - Recuperamos el perfil real desde el backend
+     - Endpoint canónico: GET /me
+  ===================================================== */
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-
     if (!storedToken) return;
 
     setToken(storedToken);
@@ -80,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  /* =========================
+  /* =====================================================
      LOGIN
-  ========================= */
+===================================================== */
 
   const login = async (name: string, password: string) => {
     const res = await fetch("http://localhost:3000/auth/login", {
@@ -100,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(data.token);
     localStorage.setItem("token", data.token);
 
-    // 🔁 Cargar perfil completo (con roles)
+    // 🔁 Cargar perfil REAL desde backend
     const meRes = await fetch("http://localhost:3000/me", {
       headers: {
         Authorization: `Bearer ${data.token}`,
@@ -112,15 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const meData = await meRes.json();
-
-    console.log("🔍 /me response:", meData);
     setUser(meData.user);
     localStorage.setItem("user", JSON.stringify(meData.user));
   };
 
-  /* =========================
+  /* =====================================================
      REGISTER
-  ========================= */
+===================================================== */
 
   const register = async (data: RegisterData) => {
     const res = await fetch("http://localhost:3000/auth/register", {
@@ -135,9 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /* =========================
+  /* =====================================================
      LOGOUT
-  ========================= */
+===================================================== */
 
   const logout = () => {
     setUser(null);
@@ -146,14 +152,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
   };
 
-  /* =========================
-     Permisos derivados
-  ========================= */
+  /* =====================================================
+     Permisos derivados (frontend)
+     -----------------------------------------------------
+     El backend expone el rol,
+     el frontend decide la UX.
+  ===================================================== */
 
-  const roles = user?.roles ?? [];
-
-  const canAdmin = roles.includes("ADMIN");
-  const canOrganize = roles.includes("ADMIN") || roles.includes("ORGANIZER");
+  const canAdmin = user?.role === "ADMIN";
+  const canOrganize =
+    user?.role === "ADMIN" || user?.role === "ORGANIZER";
 
   return (
     <AuthContext.Provider
@@ -172,9 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/* =========================
+/* =====================================================
    Hook
-========================= */
+===================================================== */
 
 export function useAuth() {
   const context = useContext(AuthContext);

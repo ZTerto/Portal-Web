@@ -12,6 +12,13 @@ type User = {
   dni?: string;
   avatar_url?: string;
   score?: number;
+  achievements?: Achievement[];
+};
+
+type Achievement = {
+  id: number;
+  name: string;
+  avatar_url?: string | null;
 };
 
 type Props = {
@@ -44,6 +51,21 @@ type Props = {
   apiUrl: string;
 };
 
+
+/* =========================
+   Arreglos de espacios en nombres de logros
+========================= */
+function achievementImage(name: string, apiUrl: string) {
+  const slug = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
+  return `${apiUrl}/uploads/achievements/${slug}.png`;
+}
+
+
 /* =========================
    Componente
 ========================= */
@@ -65,58 +87,91 @@ export default function PerfilStatus_Render({
     <div className="flex justify-center px-4 py-10">
       <div className="w-full max-w-xl bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 text-gray-900 space-y-6">
 
-        {/* HEADER */}
-        <div className="flex items-center gap-4">
+{/* HEADER */}
+<div className="flex items-center gap-4">
 
-{/* AVATAR */}
-<label className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer bg-indigo-600 text-white flex items-center justify-center">
-  {user.avatar_url ? (
-    <img
-      src={`${apiUrl}${user.avatar_url}`}
-      alt="Avatar"
-      className="w-full h-full object-cover"
+  {/* AVATAR */}
+  <label className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer bg-indigo-600 text-white flex items-center justify-center">
+    {user.avatar_url ? (
+      <img
+        src={`${apiUrl}${user.avatar_url}`}
+        alt="Avatar"
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <span className="text-3xl font-bold select-none">
+        {avatarLetter}
+      </span>
+    )}
+
+    <input
+      type="file"
+      accept="image/*"
+      hidden
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) uploadAvatar(file);
+        e.currentTarget.value = "";
+      }}
     />
-  ) : (
-    <span className="text-3xl font-bold select-none">
-      {avatarLetter}
-    </span>
-  )}
 
-  <input
-    type="file"
-    accept="image/*"
-    hidden
-    onChange={(e) => {
-      const file = e.target.files?.[0];
-      if (file) uploadAvatar(file);
-      e.currentTarget.value = "";
-    }}
-  />
+    {uploading && (
+      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm">
+        Subiendo…
+      </div>
+    )}
+  </label>
 
-  {uploading && (
-    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-sm">
-      Subiendo…
+  {/* INFO */}
+  <div>
+    <h1 className="text-2xl font-bold">
+      {form.name || "Usuario"}
+    </h1>
+    <p className="text-sm text-gray-600">
+      {form.email || "—"}
+    </p>
+    <p className="text-sm text-gray-600">
+      {form.phone || "—"}
+    </p>
+  </div>
+
+  {/* LOGROS */}
+  <div className="ml-auto text-right">
+    <p className="text-xs text-gray-500 mb-1">
+      Logros
+    </p>
+
+    <div
+      className="grid grid-cols-4 gap-1 justify-items-end max-w-[184px]"
+      style={{ direction: "rtl" }}
+    >
+      {user.achievements && user.achievements.length > 0 ? (
+        user.achievements.slice(0, 16).map((ach) => (
+          <div
+            key={ach.id}
+            className="w-10 h-10 rounded-full overflow-hidden bg-gray-200"
+          >
+          <img
+            src={achievementImage(ach.name, apiUrl)}
+            alt={ach.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+
+          </div>
+        ))
+      ) : (
+        <span className="text-xs text-gray-400">
+          Sin logros
+        </span>
+      )}
     </div>
-  )}
-</label>
+  </div>
 
-          {/* INFO */}
-          <div>
-            <h1 className="text-2xl font-bold">
-              {form.name || "Usuario"}
-            </h1>
-            <p className="text-sm text-gray-600">
-              {form.email || "—"}
-            </p>
-          </div>
+</div>
 
-          <div className="ml-auto text-center">
-            <p className="text-xs text-gray-500">Puntuación</p>
-            <p className="text-2xl font-bold text-indigo-600">
-              {user.score ?? 0}
-            </p>
-          </div>
-        </div>
 
 {/* FORMULARIO */}
 <div className="space-y-4">

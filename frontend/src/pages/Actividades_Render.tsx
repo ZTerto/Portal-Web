@@ -1,8 +1,8 @@
 import React from "react";
 
-/* =========================
+/* =====================================================
    Tipos
-========================= */
+===================================================== */
 
 type Participant = {
   id: string;
@@ -26,10 +26,14 @@ type Activity = {
   created_by?: string;
 };
 
-/* =========================
+/* =====================================================
    Constantes
-========================= */
+===================================================== */
 
+/**
+ * Tipos disponibles de actividad.
+ * Se usan solo para el selector del formulario.
+ */
 const TYPES = [
   "Rol de mesa",
   "Rol en vivo",
@@ -41,18 +45,22 @@ const TYPES = [
   "Otros",
 ];
 
-/* =========================
+/* =====================================================
    Props
-========================= */
+===================================================== */
 
 type Props = {
   activities: Activity[];
   loading: boolean;
   isDetailView: boolean;
+
+  // Permisos (frontend)
   canAdmin: boolean;
   canOrganize: boolean;
+
   currentUserId?: string;
 
+  // Estado del formulario
   imageUrl: string | null;
   uploading: boolean;
   title: string;
@@ -66,6 +74,7 @@ type Props = {
   duration: string;
   setDuration: (v: string) => void;
 
+  // Acciones
   onUploadImage: (file: File) => void;
   onCreate: () => void;
   onDelete: (id: number) => void;
@@ -77,19 +86,21 @@ type Props = {
     userId: string
   ) => void;
 
+  // Utilidades
   apiUrl: string;
   formatDate: (iso?: string) => string | null;
   formatDateTime: (iso?: string) => string;
 };
 
-/* =========================
+/* =====================================================
    Render
-========================= */
+===================================================== */
 
 export default function Actividades_Render({
   activities,
   loading,
   isDetailView,
+
   canAdmin,
   canOrganize,
   currentUserId,
@@ -123,10 +134,15 @@ export default function Actividades_Render({
     <div className="p-4 max-w-5xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold">Actividades</h1>
 
-      {/* ===== CREAR ACTIVIDAD ===== */}
+      {/* =================================================
+          CREAR ACTIVIDAD
+          Visible solo para ADMIN / ORGANIZER
+         ================================================= */}
       {!isDetailView && (canAdmin || canOrganize) && (
         <div className="bg-white rounded-xl p-4 text-gray-900 shadow space-y-4">
           <div className="flex gap-4">
+
+            {/* Imagen */}
             <label className="w-40 h-56 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden">
               {imageUrl ? (
                 <img
@@ -149,6 +165,7 @@ export default function Actividades_Render({
               />
             </label>
 
+            {/* Formulario */}
             <div className="flex-1 space-y-2">
               <select
                 className="w-full border rounded px-2 py-1"
@@ -173,7 +190,9 @@ export default function Actividades_Render({
                 className="w-full border rounded px-2 py-1 resize-y"
                 placeholder="Descripción"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) =>
+                  setDescription(e.target.value)
+                }
               />
 
               <div className="flex gap-2">
@@ -208,7 +227,9 @@ export default function Actividades_Render({
         </div>
       )}
 
-      {/* ===== LISTADO ===== */}
+      {/* =================================================
+          LISTADO DE ACTIVIDADES
+         ================================================= */}
       {loading ? (
         <p className="text-center text-blue-200">
           Cargando…
@@ -220,8 +241,11 @@ export default function Actividades_Render({
               key={a.id}
               className="bg-white rounded-xl p-4 text-gray-900 shadow flex gap-6 items-start"
             >
-              {/* COLUMNA IZQUIERDA */}
+              {/* =====================
+                  COLUMNA IZQUIERDA
+                 ===================== */}
               <div className="w-32">
+                {/* Imagen */}
                 {a.image_url && (
                   <label
                     className={`block w-32 h-48 rounded-lg overflow-hidden ${
@@ -234,7 +258,8 @@ export default function Actividades_Render({
                       src={`${apiUrl}${a.image_url}`}
                       className="w-full h-full object-cover group-hover:opacity-80"
                     />
-                    {(canAdmin || a.created_by === currentUserId) && (
+                    {(canAdmin ||
+                      a.created_by === currentUserId) && (
                       <input
                         type="file"
                         hidden
@@ -251,6 +276,7 @@ export default function Actividades_Render({
                   </label>
                 )}
 
+                {/* Apuntarse / Salir */}
                 <div className="mt-2">
                   {a.is_joined ? (
                     <button
@@ -269,6 +295,7 @@ export default function Actividades_Render({
                   )}
                 </div>
 
+                {/* Participantes */}
                 {a.participants_list &&
                   a.participants_list.length > 0 && (
                     <div className="mt-4 space-y-3">
@@ -303,7 +330,9 @@ export default function Actividades_Render({
                             </div>
                           </div>
 
-                          {(canAdmin || a.created_by === currentUserId) && (
+                          {(canAdmin ||
+                            a.created_by ===
+                              currentUserId) && (
                             <button
                               onClick={() =>
                                 onRemoveParticipant(
@@ -322,7 +351,9 @@ export default function Actividades_Render({
                   )}
               </div>
 
-              {/* INFO */}
+              {/* =====================
+                  INFO CENTRAL
+                 ===================== */}
               <div className="flex-1 flex flex-col">
                 <p className="text-indigo-600">
                   {a.type}
@@ -351,7 +382,9 @@ export default function Actividades_Render({
                 </div>
               </div>
 
-              {/* BORRAR (ADMIN O OWNER) */}
+              {/* =====================
+                  BORRAR ACTIVIDAD
+                 ===================== */}
               {(canAdmin ||
                 a.created_by === currentUserId) && (
                 <button

@@ -6,6 +6,7 @@ const router = express.Router();
 
 /* =========================
    GET /calendar
+   Usuario autenticado
 ========================= */
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -32,13 +33,14 @@ router.get("/", requireAuth, async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error("GET /calendar error:", err);
-    res.status(500).send("Error obteniendo calendario");
+    console.error("GET /calendar ERROR:", err);
+    res.status(500).json({ error: "Error obteniendo calendario" });
   }
 });
 
 /* =========================
    POST /calendar
+   ADMIN + ORGANIZER
 ========================= */
 router.post("/", requireAuth, async (req, res) => {
   const { activity_id, day, zone, start_hour, end_hour } = req.body;
@@ -50,17 +52,13 @@ router.post("/", requireAuth, async (req, res) => {
     start_hour === undefined ||
     end_hour === undefined
   ) {
-    return res.status(400).send("Datos incompletos");
+    return res.status(400).json({ error: "Datos incompletos" });
   }
 
-  /*
-    if (
-      req.user?.role !== "ADMIN" &&
-      req.user?.role !== "ORGANIZER"
-    ) {
-      return res.status(403).send("No autorizado");
-    }
-  */
+  // ✅ CORRECCIÓN DE ROLES
+  if (!["ADMIN", "ORGANIZER"].includes(req.user.role)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
 
   try {
     const result = await pool.query(
@@ -70,35 +68,34 @@ router.post("/", requireAuth, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
       `,
-      [
-        activity_id,
-        day,
-        zone,
-        start_hour,
-        end_hour,
-        req.user.id,
-      ]
+      [activity_id, day, zone, start_hour, end_hour, req.user.id]
     );
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("POST /calendar error:", err);
+    console.error("POST /calendar ERROR:", err);
 
     if (err.code === "23505") {
       return res
         .status(409)
-        .send("Ya existe una actividad en esa franja");
+        .json({ error: "Ya existe una actividad en esa franja" });
     }
 
-    res.status(500).send("Error creando evento");
+    res.status(500).json({ error: "Error creando evento" });
   }
 });
 
 /* =========================
    DELETE /calendar/:id
+   ADMIN + ORGANIZER
 ========================= */
 router.delete("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
+
+  // ✅ CORRECCIÓN DE ROLES
+  if (!["ADMIN", "ORGANIZER"].includes(req.user.role)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
 
   try {
     const result = await pool.query(
@@ -111,13 +108,13 @@ router.delete("/:id", requireAuth, async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).send("Evento no encontrado");
+      return res.status(404).json({ error: "Evento no encontrado" });
     }
 
     res.json({ success: true });
   } catch (err) {
-    console.error("DELETE /calendar error:", err);
-    res.status(500).send("Error borrando evento");
+    console.error("DELETE /calendar ERROR:", err);
+    res.status(500).json({ error: "Error borrando evento" });
   }
 });
 

@@ -2,7 +2,11 @@ import PerfilStatus_Render from "./PerfilStatus_Render";
 import { useEffect, useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 
-/* ===== Tipos ===== */
+
+/* =====================================================
+   Tipos
+===================================================== */
+
 type ApiResponse = {
   message?: string;
   user?: {
@@ -16,21 +20,46 @@ type ApiResponse = {
   };
 };
 
+/* =====================================================
+   Configuración
+===================================================== */
+
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-/* ===== Componente ===== */
+/* =====================================================
+   Componente principal (LÓGICA)
+===================================================== */
+
 export default function PerfilStatus() {
   const { token } = useAuth();
 
-  const [data, setData] = useState<ApiResponse | null>(null);
+  /* =========================
+     Estado general
+  ========================= */
+
+  const [data, setData] = useState<ApiResponse | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    null
+  );
+
+
+  /* =========================
+     Avatar
+  ========================= */
 
   const [uploading, setUploading] = useState(false);
-  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] =
+    useState(false);
 
-  /* ===== Formulario editable ===== */
+
+  /* =========================
+     Formulario editable
+  ========================= */
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -39,7 +68,10 @@ export default function PerfilStatus() {
     password: "",
   });
 
-  /* ===== Cargar perfil ===== */
+  /* =========================
+     Cargar perfil (/me)
+  ========================= */
+
   useEffect(() => {
     if (!token) return;
 
@@ -49,12 +81,16 @@ export default function PerfilStatus() {
       },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar el perfil");
+        if (!res.ok)
+          throw new Error(
+            "Error al cargar el perfil"
+          );
         return res.json();
       })
       .then((json: ApiResponse) => {
         setData(json);
 
+        // Inicializar formulario editable
         if (json.user) {
           setForm({
             name: json.user.name || "",
@@ -71,11 +107,18 @@ export default function PerfilStatus() {
 
   const user = data?.user;
 
+  /* =========================
+     Reset estado avatar
+     cuando cambia la imagen
+  ========================= */
 
-  /* ===== Avatar ===== */
   useEffect(() => {
     setAvatarLoaded(false);
   }, [user?.avatar_url]);
+
+  /* =========================
+     Subir avatar
+  ========================= */
 
   const uploadAvatar = async (file: File) => {
     if (!token) return;
@@ -86,18 +129,23 @@ export default function PerfilStatus() {
     setUploading(true);
 
     try {
-      const res = await fetch(`${API_URL}/me/avatar`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const res = await fetch(
+        `${API_URL}/me/avatar`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok)
+        throw new Error("Upload failed");
 
       const json = await res.json();
 
+      // Actualización local
       setData((prev) =>
         prev
           ? {
@@ -116,7 +164,10 @@ export default function PerfilStatus() {
     }
   };
 
-  /* ===== Guardar perfil ===== */
+  /* =========================
+     Guardar perfil
+  ========================= */
+
   const saveProfile = async () => {
     if (!token) return;
 
@@ -131,8 +182,11 @@ export default function PerfilStatus() {
       });
 
       const json = await res.json();
+
       if (!res.ok) {
-        throw new Error(json?.error || "Error guardando perfil");
+        throw new Error(
+          json?.error || "Error guardando perfil"
+        );
       }
 
       // Reflejar cambios localmente
@@ -150,11 +204,16 @@ export default function PerfilStatus() {
 
       alert("Perfil actualizado");
     } catch (e: any) {
-      alert(e?.message || "Error al guardar perfil");
+      alert(
+        e?.message || "Error al guardar perfil"
+      );
     }
   };
 
-  /* ===== Estados visuales ===== */
+  /* =========================
+     Estados visuales
+  ========================= */
+
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-blue-200">
@@ -178,8 +237,6 @@ export default function PerfilStatus() {
       </div>
     );
   }
-
-  /* ===== Render ===== */
 
   return (
     <PerfilStatus_Render

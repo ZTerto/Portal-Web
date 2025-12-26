@@ -89,6 +89,7 @@ export default function Calendario_Render({
   return (
     <div className="p-6 overflow-x-auto select-none relative h-full flex flex-col">
       <div className="w-full overflow-hidden relative flex flex-col flex-1">
+
         {/* Header días */}
         <div
           className="grid"
@@ -100,7 +101,7 @@ export default function Calendario_Render({
               key={day}
               className="col-span-2 border-b border-gray-700 py-1 flex items-center justify-center"
             >
-              <span className="text-sm font-medium">{day}</span>
+              <span className="text-xs font-medium">{day}</span>
             </div>
           ))}
         </div>

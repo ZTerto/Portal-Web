@@ -1,6 +1,6 @@
-/* =========================
+/* =====================================================
    Tipos
-========================= */
+===================================================== */
 
 type Participant = {
   id: string;
@@ -24,9 +24,9 @@ type Ludoteca = {
   is_joined?: boolean;
 };
 
-/* =========================
+/* =====================================================
    Props
-========================= */
+===================================================== */
 
 type Props = {
   ludotecas: Ludoteca[];
@@ -34,7 +34,7 @@ type Props = {
   isDetailView: boolean;
   currentUserId?: string;
 
-  /* formulario */
+  /* Formulario */
   types: string[];
   title: string;
   setTitle: (v: string) => void;
@@ -49,16 +49,16 @@ type Props = {
   imageUrl: string | null;
   uploading: boolean;
 
-  /* permisos */
+  /* Permisos (frontend) */
   canAdmin: boolean;
   canOrganize: boolean;
 
-  /* utils */
+  /* Utilidades */
   apiUrl: string;
   formatDate: (iso?: string) => string | null;
   formatDateTime: (iso?: string) => string;
 
-  /* acciones */
+  /* Acciones */
   onUploadImage: (file: File) => void;
   onCreate: () => void;
   onJoin: (id: number) => void;
@@ -67,9 +67,9 @@ type Props = {
   onReplaceImage: (id: number, file: File) => void;
 };
 
-/* =========================
-   Componente
-========================= */
+/* =====================================================
+   Componente de Render
+===================================================== */
 
 export default function Ludoteca_Render({
   ludotecas,
@@ -105,6 +105,9 @@ export default function Ludoteca_Render({
   onDelete,
   onReplaceImage,
 }: Props) {
+  /* =========================
+     Estado de carga
+  ========================= */
   if (loading) {
     return (
       <p className="text-center py-20 text-blue-200">
@@ -117,9 +120,10 @@ export default function Ludoteca_Render({
     <div className="p-4 max-w-5xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold">Ludoteca</h1>
 
-      {/* =========================
+      {/* =================================================
           CREAR LUDOTECA
-      ========================= */}
+          Visible solo si NO es vista detalle
+         ================================================= */}
       {!isDetailView && (
         <div className="bg-white rounded-xl p-4 text-gray-900 shadow space-y-4">
           <div className="flex gap-4">
@@ -171,7 +175,9 @@ export default function Ludoteca_Render({
                 className="w-full border rounded px-2 py-1 resize-y"
                 placeholder="Descripción"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) =>
+                  setDescription(e.target.value)
+                }
               />
 
               <div className="flex gap-2">
@@ -187,7 +193,9 @@ export default function Ludoteca_Render({
                   className="w-1/2 border rounded px-2 py-1"
                   placeholder="⏱ Duración (opcional)"
                   value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
+                  onChange={(e) =>
+                    setDuration(e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -204,9 +212,9 @@ export default function Ludoteca_Render({
         </div>
       )}
 
-      {/* =========================
-          LISTADO
-      ========================= */}
+      {/* =================================================
+          LISTADO DE LUDOTECA
+         ================================================= */}
       <div className="space-y-4">
         {ludotecas.map((l) => {
           const isOwner = l.created_by === currentUserId;
@@ -216,8 +224,11 @@ export default function Ludoteca_Render({
               key={l.id}
               className="bg-white rounded-xl p-4 text-gray-900 shadow flex gap-6"
             >
-              {/* IZQUIERDA */}
+              {/* =====================
+                  COLUMNA IZQUIERDA
+                 ===================== */}
               <div className="w-32">
+                {/* Imagen */}
                 {l.image_url && (
                   <label
                     className={`block w-32 h-48 rounded-lg overflow-hidden ${
@@ -247,7 +258,7 @@ export default function Ludoteca_Render({
                   </label>
                 )}
 
-                {/* INTERÉS */}
+                {/* Interés */}
                 <div className="mt-2">
                   {l.is_joined ? (
                     <button
@@ -266,9 +277,10 @@ export default function Ludoteca_Render({
                   )}
                 </div>
 
-                {/* PARTICIPANTES */}
+                {/* Participantes */}
                 {Array.isArray(l.participants_list) &&
-                  l.participants_list.length > 0 && (
+                  l.participants_list.length >
+                    0 && (
                     <div className="mt-3 space-y-2">
                       <p className="text-[11px] text-gray-500 text-center">
                         Interesados:
@@ -290,7 +302,8 @@ export default function Ludoteca_Render({
                               ) : (
                                 p.name
                                   ?.charAt(0)
-                                  ?.toUpperCase() ?? "?"
+                                  ?.toUpperCase() ??
+                                "?"
                               )}
                             </div>
 
@@ -299,7 +312,9 @@ export default function Ludoteca_Render({
                                 {p.name}
                               </p>
                               <p className="text-[10px] text-gray-400">
-                                {formatDateTime(p.joined_at)}
+                                {formatDateTime(
+                                  p.joined_at
+                                )}
                               </p>
                             </div>
                           </div>
@@ -318,10 +333,16 @@ export default function Ludoteca_Render({
                   )}
               </div>
 
-              {/* DERECHA */}
+              {/* =====================
+                  COLUMNA DERECHA
+                 ===================== */}
               <div className="flex-1">
-                <p className="text-indigo-600">{l.type}</p>
-                <p className="font-bold text-2xl">{l.title}</p>
+                <p className="text-indigo-600">
+                  {l.type}
+                </p>
+                <p className="font-bold text-2xl">
+                  {l.title}
+                </p>
                 <p className="text-sm whitespace-pre-line">
                   {l.description}
                 </p>
@@ -344,8 +365,12 @@ export default function Ludoteca_Render({
                 </div>
               </div>
 
-              {/* BORRAR */}
-              {(isOwner || canAdmin || canOrganize) && (
+              {/* =====================
+                  BORRAR
+                 ===================== */}
+              {(isOwner ||
+                canAdmin ||
+                canOrganize) && (
                 <button
                   onClick={() => onDelete(l.id)}
                   title="Eliminar"
@@ -354,7 +379,6 @@ export default function Ludoteca_Render({
                   ×
                 </button>
               )}
-
             </div>
           );
         })}

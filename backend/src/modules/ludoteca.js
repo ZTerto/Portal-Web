@@ -7,16 +7,16 @@ import { requireAuth } from "../core/middlewares.js";
 
 const router = express.Router();
 
-/* =========================
-   PREPARAR DIRECTORIO
-========================= */
+/* =====================================================
+   PREPARAR DIRECTORIO DE SUBIDAS
+===================================================== */
 
 const uploadDir = path.resolve(process.cwd(), "uploads", "ludoteca");
 fs.mkdirSync(uploadDir, { recursive: true });
 
-/* =========================
+/* =====================================================
    MULTER CONFIG (CREAR)
-========================= */
+===================================================== */
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -24,6 +24,7 @@ const storage = multer.diskStorage({
     const safeName = req.body.title
       ? req.body.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()
       : "ludoteca";
+
     cb(
       null,
       `${Date.now()}_${safeName}${path.extname(file.originalname)}`
@@ -33,9 +34,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* =========================
+/* =====================================================
    MULTER CONFIG (REEMPLAZAR IMAGEN)
-========================= */
+===================================================== */
 
 const replaceStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -47,9 +48,12 @@ const replaceStorage = multer.diskStorage({
 
 const replaceUpload = multer({ storage: replaceStorage });
 
-/* =========================
-   HELPERS
-========================= */
+/* =====================================================
+   HELPERS (CONSULTAS COMPLEJAS)
+   -----------------------------------------------------
+   - Devuelven la ludoteca enriquecida con participantes
+   - Calculan si el usuario actual está apuntado
+===================================================== */
 
 async function fetchLudotecaForUser(userId) {
   const result = await pool.query(
@@ -151,9 +155,10 @@ async function fetchOneLudotecaForUser(ludotecaId, userId) {
   return result.rows[0];
 }
 
-/* =========================
-   GET LUDOTECA
-========================= */
+/* =====================================================
+   GET /ludoteca
+   Usuario autenticado
+===================================================== */
 
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -165,9 +170,10 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
-   GET LUDOTECA BY ID
-========================= */
+/* =====================================================
+   GET /ludoteca/:id
+   Usuario autenticado
+===================================================== */
 
 router.get("/:id", requireAuth, async (req, res) => {
   try {
@@ -185,9 +191,10 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
+/* =====================================================
    UPLOAD IMAGE (CREAR)
-========================= */
+   Usuario autenticado
+===================================================== */
 
 router.post(
   "/upload-image",
@@ -203,9 +210,10 @@ router.post(
   }
 );
 
-/* =========================
+/* =====================================================
    CREATE LUDOTECA
-========================= */
+   Usuario autenticado
+===================================================== */
 
 router.post("/", requireAuth, async (req, res) => {
   try {
@@ -243,9 +251,9 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
+/* =====================================================
    ME INTERESA
-========================= */
+===================================================== */
 
 router.post("/:id/join", requireAuth, async (req, res) => {
   try {
@@ -272,9 +280,9 @@ router.post("/:id/join", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
+/* =====================================================
    QUITAR INTERÉS
-========================= */
+===================================================== */
 
 router.delete("/:id/join", requireAuth, async (req, res) => {
   try {
@@ -300,9 +308,10 @@ router.delete("/:id/join", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
-   REEMPLAZAR IMAGEN (SOLO CREADOR)
-========================= */
+/* =====================================================
+   REEMPLAZAR IMAGEN
+   SOLO CREADOR
+===================================================== */
 
 router.patch(
   "/:id/image",
@@ -341,9 +350,10 @@ router.patch(
   }
 );
 
-/* =========================
-   DELETE LUDOTECA (OWNER / ADMIN / ORGANIZER)
-========================= */
+/* =====================================================
+   DELETE LUDOTECA
+   OWNER / ADMIN / ORGANIZER
+===================================================== */
 
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
@@ -361,29 +371,16 @@ router.delete("/:id", requireAuth, async (req, res) => {
 
     const createdBy = ownerResult.rows[0].created_by;
 
-    // 2️⃣ Obtener roles del usuario
-    const rolesResult = await pool.query(
-      `
-      SELECT r.name
-      FROM user_roles ur
-      JOIN roles r ON r.id = ur.role_id
-      WHERE ur.user_id = $1
-      `,
-      [req.user.id]
-    );
-
-    const roles = rolesResult.rows.map((r) => r.name);
-
-    const isAdmin = roles.includes("ADMIN");
-    const isOrganizer = roles.includes("ORGANIZER");
+    // 2️⃣ Permisos
     const isOwner = createdBy === req.user.id;
+    const isPrivileged =
+      req.user.role === "admin" || req.user.role === "organizer";
 
-    // 3️⃣ Permiso
-    if (!isOwner && !isAdmin && !isOrganizer) {
+    if (!isOwner && !isPrivileged) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    // 4️⃣ Borrar
+    // 3️⃣ Borrar
     await pool.query("DELETE FROM ludoteca WHERE id = $1", [id]);
 
     res.json({ success: true });

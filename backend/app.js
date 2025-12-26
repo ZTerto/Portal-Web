@@ -2,8 +2,6 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 
-import pool from "./src/core/db.js";
-
 import calendarRoutes from "./src/modules/calendar.js";
 import usersRoutes from "./src/modules/users.js";
 import authRoutes from "./src/modules/auth.js";
@@ -16,48 +14,61 @@ import { requireAuth } from "./src/core/middlewares.js";
 
 const app = express();
 
-/* =========================
+/* =====================================================
    Middlewares globales
-========================= */
-
+   -----------------------------------------------------
+   - CORS: permitir peticiones desde el frontend
+   - JSON: parsear body en requests
+===================================================== */
 app.use(cors());
 app.use(express.json());
 
-/* =========================
-   🔥 SERVIR ARCHIVOS SUBIDOS
-   (MUY IMPORTANTE)
-========================= */
-
+/* =====================================================
+   SERVIR ARCHIVOS SUBIDOS
+   -----------------------------------------------------
+   Permite acceder a:
+   /uploads/avatars/...
+   /uploads/ludoteca/...
+===================================================== */
 app.use("/uploads", express.static("uploads"));
 
-/* =========================
-   Rutas
-========================= */
+/* =====================================================
+   Rutas de la aplicación
+===================================================== */
 
-app.use("/calendar", calendarRoutes);
+// Autenticación
 app.use("/auth", authRoutes);
-app.use("/members", membersRoutes);
-app.use("/achievements", achievementsRoutes);
-app.use("/activities", activitiesRoutes);
-app.use("/ludoteca", ludotecaRouter);
+
+// Datos de usuario autenticado
 app.use("/", usersRoutes);
 
+// Miembros y administración
+app.use("/members", membersRoutes);
 
-/* =========================
+// Contenido
+app.use("/achievements", achievementsRoutes);
+app.use("/activities", activitiesRoutes);
+app.use("/calendar", calendarRoutes);
+app.use("/ludoteca", ludotecaRouter);
+
+/* =====================================================
    Healthcheck
-========================= */
-
-app.get("/ping", (req, res) => {
+===================================================== */
+app.get("/ping", (_req, res) => {
   res.send("backend pong 🏓");
 });
 
-/* =========================
-   Perfil autenticado
-========================= */
-
+/* =====================================================
+   DEBUG: Perfil autenticado
+   -----------------------------------------------------
+   Ruta auxiliar para comprobar requireAuth.
+   No es necesaria para el frontend final.
+===================================================== */
 app.get("/me", requireAuth, async (req, res) => {
   try {
-    console.log("🔍 /me req.user =", req.user); // 👈 AÑADIR SOLO ESTA LÍNEA
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔍 /me req.user =", req.user);
+    }
 
     res.json({
       message: "Acceso autorizado",
@@ -68,7 +79,5 @@ app.get("/me", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 });
-
-
 
 export default app;

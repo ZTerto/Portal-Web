@@ -170,7 +170,7 @@ export default function Miembros_Render({
             {/* =====================
                 DERECHA
                ===================== */}
-            <div className="flex items-center justify-end w-[210px] shrink-0">
+            <div className="flex items-center justify-end w-[180px] shrink-0">
               {/* LOGROS + AÑADIR */}
               <div
                 className="
@@ -202,7 +202,7 @@ export default function Miembros_Render({
                     />
 
                     {/* Quitar logro */}
-                    {(canAdmin || canOrganize) && (
+                    {(canAdmin) && (
                       <button
                         title="Quitar logro"
                         onClick={() =>

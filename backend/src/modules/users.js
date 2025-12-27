@@ -8,6 +8,22 @@ import { requireAuth } from "../core/middlewares.js";
 
 const router = express.Router();
 
+
+/* =====================================================
+   GET /me
+   -----------------------------------------------------
+   Devuelve la información completa del usuario autenticado.
+   Incluye:
+   - Identidad y permisos desde el token (req.user)
+   - Datos de perfil desde la tabla users
+   - Estados de participación desde user_status
+   - Logros asociados al usuario
+
+   Seguridad:
+   - La identidad y los roles provienen SIEMPRE del JWT
+   - Los permisos no dependen de datos editables
+   - El usuario solo puede acceder a su propio perfil
+===================================================== */
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -21,6 +37,11 @@ router.get("/me", requireAuth, async (req, res) => {
         u.avatar_url,
         u.score,
 
+        us.attendance,
+        us.payment,
+        us.transport,
+        us.food,
+
         COALESCE(
           JSON_AGG(
             DISTINCT jsonb_build_object(
@@ -33,25 +54,33 @@ router.get("/me", requireAuth, async (req, res) => {
         ) AS achievements
 
       FROM users u
+      LEFT JOIN user_status us ON us.user_id = u.id
       LEFT JOIN user_achievements ua ON ua.user_id = u.id
       LEFT JOIN achievements a ON a.id = ua.achievement_id
+
       WHERE u.id = $1
-      GROUP BY u.id
+      GROUP BY
+        u.id,
+        us.attendance,
+        us.payment,
+        us.transport,
+        us.food
       `,
       [req.user.id]
     );
 
     res.json({
       user: {
-        ...req.user,      // 👈 role, id, etc
-        ...result.rows[0] // 👈 phone, dni, avatar, score, achievements
-      }
+        ...req.user,        // 🔐 identidad + permisos (intocable)
+        ...result.rows[0],  // 📄 perfil + status + achievements
+      },
     });
   } catch (err) {
     console.error("GET /me ERROR:", err);
     res.status(500).json({ error: "Error cargando perfil" });
   }
 });
+
 
 
 /* =====================================================
@@ -212,5 +241,64 @@ router.put("/me", requireAuth, async (req, res) => {
   }
 });
 
+
+/* =====================================================
+   PUT /me/status
+   -----------------------------------------------------
+   Actualiza los estados de participación del usuario
+   autenticado en la tabla user_status.
+
+   Campos permitidos:
+   - attendance  (0 | 1)
+   - payment     (0 | 1)
+   - transport   (0 | 1 | 2)
+   - food        (0 | 1 | 2)
+
+   Seguridad:
+   - El user_id se obtiene siempre de req.user.id
+   - No se pueden modificar roles ni datos de users
+   - Validación adicional garantizada por CHECK en BD
+===================================================== */
+router.put("/me/status", requireAuth, async (req, res) => {
+  const { attendance, payment, transport, food } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE user_status
+      SET
+        attendance = COALESCE($1, attendance),
+        payment    = COALESCE($2, payment),
+        transport  = COALESCE($3, transport),
+        food       = COALESCE($4, food),
+        updated_at = NOW()
+      WHERE user_id = $5
+      RETURNING attendance, payment, transport, food
+      `,
+      [
+        attendance,
+        payment,
+        transport,
+        food,
+        req.user.id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "Estado no encontrado" });
+    }
+
+    res.json({
+      status: result.rows[0],
+    });
+  } catch (err) {
+    console.error("PUT /me/status ERROR:", err);
+    res
+      .status(500)
+      .json({ error: "Error actualizando estado" });
+  }
+});
 
 export default router;

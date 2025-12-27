@@ -62,7 +62,7 @@ export default function Perfil_Render({
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              DNI (o NIE)
+              Identificación (DNI / NIE)
             </label>
             <input
               name="dni"
@@ -143,17 +143,6 @@ export default function Perfil_Render({
             {loading ? "Registrando..." : "Registrarme"}
           </button>
         </div>
-
-        {/* =====================
-            Texto informativo
-           ===================== */}
-        <p className="mt-6 text-base italic text-gray-700 leading-relaxed">
-          Esta información es exclusivamente para gestionar la
-          organización de las jornadas. Si sigues teniendo dudas
-          pero igualmente quieres registrarte habla con Terto.
-          ¿Dónde encuentro a Terto? Si has llegado aquí sabes de
-          sobra cómo contactar con esa persona...
-        </p>
 
         {/* =====================
             Enlace a login

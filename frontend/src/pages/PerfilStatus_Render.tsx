@@ -1,6 +1,16 @@
 import React from "react";
 
 /* =========================
+   Importar tipos
+========================= */
+import type {
+  AttendanceStatus,
+  PaymentStatus,
+  TransportStatus,
+  FoodStatus,
+} from "./PerfilStatus";
+
+/* =========================
    Tipos
 ========================= */
 
@@ -49,6 +59,23 @@ type Props = {
   uploadAvatar: (file: File) => void;
 
   apiUrl: string;
+  
+  
+  /* =========================
+     Estados de participación
+  ========================= */
+
+  attendance: AttendanceStatus;
+  payment: PaymentStatus;
+  transport: TransportStatus;
+  food: FoodStatus;
+
+  onToggleAttendance: () => void;
+  onTogglePayment: () => void;
+  onCycleTransport: () => void;
+  onCycleFood: () => void;
+
+
 };
 
 
@@ -75,14 +102,62 @@ export default function PerfilStatus_Render({
   form,
   setForm,
   onSave,
-  avatarLoaded,
-  setAvatarLoaded,
   uploading,
   uploadAvatar,
   apiUrl,
+
+  attendance,
+  payment,
+  transport,
+  food,
+
+  onToggleAttendance,
+  onTogglePayment,
+  onCycleTransport,
+  onCycleFood,
 }: Props) {
+
+
   const avatarLetter = form.name?.charAt(0)?.toUpperCase() || "?";
 
+  /* =========================
+     Clases por estado
+  ========================= */
+
+  function attendanceClass() {
+    if (attendance === 0) {
+      return "rounded-lg px-4 py-4 bg-gray-400 text-gray-700 font-semibold";
+    }
+    return "rounded-lg px-4 py-4 bg-sky-600 text-white font-semibold";
+  }
+
+  function paymentClass() {
+    if (payment === 0) {
+      return "rounded-lg px-4 py-4 bg-gray-400 text-gray-700 font-semibold";
+    }
+    return "rounded-lg px-4 py-4 bg-green-600 text-white font-semibold";
+  }
+
+  function transportClass() {
+    if (transport === 0) {
+      return "rounded-lg px-4 py-4 bg-gray-400 text-gray-700 font-semibold";
+    }
+    if (transport === 1) {
+      return "rounded-lg px-4 py-4 bg-sky-600 text-white font-semibold";
+    }
+    return "rounded-lg px-4 py-4 bg-indigo-800 text-white font-semibold";
+  }
+
+  function foodClass() {
+    if (food === 0) {
+      return "rounded-lg px-4 py-4 bg-gray-400 text-gray-700 font-semibold";
+    }
+    if (food === 1) {
+      return "rounded-lg px-4 py-4 bg-sky-600 text-white font-semibold";
+    }
+    return "rounded-lg px-4 py-4 bg-indigo-800 text-white font-semibold";
+  }
+ 
   return (
     <div className="flex justify-center px-4 py-10">
       <div className="w-full max-w-xl bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 text-gray-900 space-y-6">
@@ -90,8 +165,9 @@ export default function PerfilStatus_Render({
 {/* HEADER */}
 <div className="flex items-center gap-4">
 
+
   {/* AVATAR */}
-  <label className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer bg-indigo-600 text-white flex items-center justify-center">
+  <label className="relative w-26 h-26 rounded-full overflow-hidden cursor-pointer bg-indigo-600 text-white flex items-center justify-center">
     {user.avatar_url ? (
       <img
         src={`${apiUrl}${user.avatar_url}`}
@@ -173,7 +249,57 @@ export default function PerfilStatus_Render({
 </div>
 
 
-{/* FORMULARIO */}
+{/* =========================
+    ESTADOS DE PARTICIPACIÓN
+========================= */}
+<div className="grid grid-cols-2 gap-2 mt-3 mb-4">
+
+  {/* ASISTENCIA */}
+<button
+  className={attendanceClass()}
+  onClick={onToggleAttendance}
+>
+  {attendance === 0 && "No puedo este año"}
+  {attendance === 1 && "Quiero ir este año"}
+</button>
+
+
+  {/* TRANSPORTE */}
+<button
+  className={transportClass()}
+  onClick={onCycleTransport}
+>
+  {transport === 0 && "Necesito transporte"}
+  {transport === 1 && "Tengo transporte"}
+  {transport === 2 && "Pongo transporte"}
+</button>
+
+
+  {/* PAGO */}
+<button
+  className={paymentClass()}
+  onClick={onTogglePayment}
+>
+  {payment === 0 && "No pagado aún"}
+  {payment === 1 && "Todo pagado 💰"}
+</button>
+
+
+  {/* COMIDA */}
+<button
+  className={foodClass()}
+  onClick={onCycleFood}
+>
+  {food === 0 && "Necesito comida"}
+  {food === 1 && "Gestiono mi comida"}
+  {food === 2 && "Me ofrezco a cocinar"}
+</button>
+
+</div>
+
+{/* =========================
+    FORMULARIO DE PERFIL
+========================= */}
 <div className="space-y-4">
 
   <div>
@@ -218,7 +344,7 @@ export default function PerfilStatus_Render({
 
   <div>
     <label className="block text-sm font-medium mb-1">
-      DNI
+      Identificación (DNI / NIE)
     </label>
     <input
       className="w-full border rounded px-3 py-2"

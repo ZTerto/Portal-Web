@@ -10,15 +10,37 @@ import { useAuth } from "../utils/AuthContext";
 type ApiResponse = {
   message?: string;
   user?: {
+    /* identidad / permisos (JWT) */
     id: string;
+    role?: string;
+
+    /* perfil */
     name?: string;
     email?: string;
     phone?: string;
     dni?: string;
     avatar_url?: string;
     score?: number;
+
+    /* estados de participación */
+    attendance?: AttendanceStatus;
+    payment?: PaymentStatus;
+    transport?: TransportStatus;
+    food?: FoodStatus;
   };
 };
+
+
+/* =========================
+   Estados de participación
+========================= */
+
+export type AttendanceStatus = 0 | 1;
+export type PaymentStatus = 0 | 1;
+export type TransportStatus = 0 | 1 | 2;
+export type FoodStatus = 0 | 1 | 2;
+
+
 
 /* =====================================================
    Configuración
@@ -57,6 +79,47 @@ export default function PerfilStatus() {
 
 
   /* =========================
+     Actualizar estados
+  ========================= */
+
+  const toggleAttendance = () => {
+    if (attendance === 0) {
+      setAttendance(1);
+    } else {
+      setAttendance(0);
+    }
+  };
+
+  const togglePayment = () => {
+    if (payment === 0) {
+      setPayment(1);
+    } else {
+      setPayment(0);
+    }
+  };
+
+  const cycleTransport = () => {
+    if (transport === 0) {
+      setTransport(1);
+    } else if (transport === 1) {
+      setTransport(2);
+    } else {
+      setTransport(0);
+    }
+  };
+
+  const cycleFood = () => {
+    if (food === 0) {
+      setFood(1);
+    } else if (food === 1) {
+      setFood(2);
+    } else {
+      setFood(0);
+    }
+  };
+
+
+  /* =========================
      Formulario editable
   ========================= */
 
@@ -67,6 +130,7 @@ export default function PerfilStatus() {
     dni: "",
     password: "",
   });
+
 
   /* =========================
      Cargar perfil (/me)
@@ -90,8 +154,9 @@ export default function PerfilStatus() {
       .then((json: ApiResponse) => {
         setData(json);
 
-        // Inicializar formulario editable
         if (json.user) {
+
+          //Inicializar formulario
           setForm({
             name: json.user.name || "",
             email: json.user.email || "",
@@ -99,6 +164,24 @@ export default function PerfilStatus() {
             dni: json.user.dni || "",
             password: "",
           });
+
+
+          //Inicializar estados
+          if (typeof json.user.attendance === "number") {
+            setAttendance(json.user.attendance);
+          }
+
+          if (typeof json.user.payment === "number") {
+            setPayment(json.user.payment);
+          }
+
+          if (typeof json.user.transport === "number") {
+            setTransport(json.user.transport);
+          }
+
+          if (typeof json.user.food === "number") {
+            setFood(json.user.food);
+          }
         }
       })
       .catch((err) => setError(err.message))
@@ -106,6 +189,7 @@ export default function PerfilStatus() {
   }, [token]);
 
   const user = data?.user;
+
 
   /* =========================
      Reset estado avatar
@@ -164,6 +248,24 @@ export default function PerfilStatus() {
     }
   };
 
+
+  /* =========================
+     Estados de participación
+  ========================= */
+
+  const [attendance, setAttendance] =
+    useState<AttendanceStatus>(0);
+
+  const [payment, setPayment] =
+    useState<PaymentStatus>(0);
+
+  const [transport, setTransport] =
+    useState<TransportStatus>(0);
+
+  const [food, setFood] =
+    useState<FoodStatus>(0);
+
+
   /* =========================
      Guardar perfil
   ========================= */
@@ -172,7 +274,11 @@ export default function PerfilStatus() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${API_URL}/me`, {
+      /* =========================
+         Guardar datos de perfil
+      ========================= */
+
+      const resProfile = await fetch(`${API_URL}/me`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -181,15 +287,48 @@ export default function PerfilStatus() {
         body: JSON.stringify(form),
       });
 
-      const json = await res.json();
+      const jsonProfile = await resProfile.json();
 
-      if (!res.ok) {
+      if (!resProfile.ok) {
         throw new Error(
-          json?.error || "Error guardando perfil"
+          jsonProfile?.error || "Error guardando perfil"
         );
       }
 
-      // Reflejar cambios localmente
+      /* =========================
+         Guardar estado del usuario
+      ========================= */
+
+      const resStatus = await fetch(
+        `${API_URL}/me/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            attendance,
+            payment,
+            transport,
+            food,
+          }),
+        }
+      );
+
+      const jsonStatus = await resStatus.json();
+
+      if (!resStatus.ok) {
+        throw new Error(
+          jsonStatus?.error ||
+            "Error guardando estado"
+        );
+      }
+
+      /* =========================
+         Reflejar cambios locales
+      ========================= */
+
       setData((prev) =>
         prev
           ? {
@@ -197,15 +336,20 @@ export default function PerfilStatus() {
               user: {
                 ...prev.user,
                 ...form,
+                attendance,
+                payment,
+                transport,
+                food,
               },
             }
           : prev
       );
 
-      alert("Perfil actualizado");
+      alert("Perfil y estado actualizados");
     } catch (e: any) {
       alert(
-        e?.message || "Error al guardar perfil"
+        e?.message ||
+          "Error al guardar perfil y estado"
       );
     }
   };
@@ -238,17 +382,29 @@ export default function PerfilStatus() {
     );
   }
 
-  return (
-    <PerfilStatus_Render
-      user={user}
-      form={form}
-      setForm={setForm}
-      onSave={saveProfile}
-      avatarLoaded={avatarLoaded}
-      setAvatarLoaded={setAvatarLoaded}
-      uploading={uploading}
-      uploadAvatar={uploadAvatar}
-      apiUrl={API_URL}
-    />
-  );
+return (
+  <PerfilStatus_Render
+    user={user}
+    form={form}
+    setForm={setForm}
+    onSave={saveProfile}
+    avatarLoaded={avatarLoaded}
+    setAvatarLoaded={setAvatarLoaded}
+    uploading={uploading}
+    uploadAvatar={uploadAvatar}
+    apiUrl={API_URL}
+
+    attendance={attendance}
+    payment={payment}
+    transport={transport}
+    food={food}
+
+    onToggleAttendance={toggleAttendance}
+    onTogglePayment={togglePayment}
+    onCycleTransport={cycleTransport}
+    onCycleFood={cycleFood}
+  />
+);
+
+
 }

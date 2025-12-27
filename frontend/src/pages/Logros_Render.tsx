@@ -38,61 +38,74 @@ export default function Logros_Render({
       {/* LISTADO */}
       <div className="grid grid-cols-2 gap-4">
         {[...logros]
-          .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }))
+          .sort((a, b) =>
+            a.name.localeCompare(b.name, "es", {
+              sensitivity: "base",
+            })
+          )
           .map((logro) => (
-          <div
-            key={logro.id}
-            className="relative bg-white/90 text-gray-900 rounded-2xl shadow p-4 flex gap-4"
-          >
-            {/* ❌ BORRAR (solo admin) */}
-            {canAdmin && (
-              <button
-                title="Eliminar logro"
-                onClick={() => onDelete(logro.id)}
-                className="
-                  absolute top-3 right-3
-                  w-5 h-5 rounded-full
-                  bg-white text-red-600
-                  text-lg font-bold
-                  flex items-center justify-center
-                  hover:bg-red-100 hover:text-red-800
-                "
-              >
-                ×
-              </button>
-            )}
+            <div
+              key={logro.id}
+              className="
+                relative
+                bg-white/90
+                text-gray-900
+                rounded-2xl
+                shadow
+                p-4
+                flex flex-col
+                gap-3
+              "
+            >
+              {/* ❌ BORRAR (solo admin) */}
+              {canAdmin && (
+                <button
+                  title="Eliminar logro"
+                  onClick={() => onDelete(logro.id)}
+                  className="
+                    absolute top-3 right-3
+                    w-5 h-5 rounded-full
+                    bg-white text-red-600
+                    text-lg font-bold
+                    flex items-center justify-center
+                    hover:bg-red-100 hover:text-red-800
+                  "
+                >
+                  ×
+                </button>
+              )}
 
-            {/* Avatar */}
-            <div className="w-14 h-14 flex-shrink-0 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center relative">
-              <img
-                src={achievementImage(logro.name)}
-                alt={logro.name}
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-              <span className="absolute text-white font-bold pointer-events-none opacity-0">
-                {logro.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
+              {/* FILA SUPERIOR: AVATAR + TÍTULO */}
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className="w-14 h-14 flex-shrink-0 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center">
+                  <img
+                    src={achievementImage(logro.name)}
+                    alt={logro.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
 
-            {/* Texto */}
-            <div>
-              <p className="font-semibold">
-                {logro.name}
-                {canAdmin && (
-                  <span className="ml-2 text-xs text-gray-400">
-                    #{logro.id}
-                  </span>
-                )}
-              </p>
-              <p className="text-sm text-gray-600">
+                {/* Título */}
+                <p className="font-semibold">
+                  {logro.name}
+                  {canAdmin && (
+                    <span className="ml-2 text-xs text-gray-400">
+                      #{logro.id}
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              {/* DESCRIPCIÓN */}
+              <p className="text-sm text-gray-600 leading-snug">
                 {logro.description}
               </p>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* CREAR LOGRO */}
